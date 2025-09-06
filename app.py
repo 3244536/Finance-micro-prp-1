@@ -66,7 +66,7 @@ def create_user(username, password):
     conn.commit()
     conn.close()
     return True
-  except sqlite3.IntegrityError
+  except sqlite3.IntegrityError:
   conn.close()
   return False
 
