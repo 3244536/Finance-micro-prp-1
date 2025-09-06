@@ -9,7 +9,7 @@ import io
 
 # --- Configuration de la base de données ---
 def init_db():
-    conn = sqlite3.connect('compta.db')
+  conn = sqlite3.connect('compta.db')
     cursor = conn.cursor()
     
     # Table des opérations
