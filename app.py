@@ -205,24 +205,24 @@ def register_page():
 # --- Page de réinitialisation de mot de passe ---
 def forgot_password_page():
   st.markdown('<div class="login-form">', unsafe_allow_html=True)
-  st.subheader("Réinitialiser le Mot de Passe")
-  st.warning("Pour des raisons de sécurité, veuillez entrer votre nom d'utilisateur et votre nouveau mot de passe.")
-
-  reset_username = st.text_input("Nom d'utilisateur", key="reset_username")
-  new_password = st.text_input("Nouveau Mot de passe", type="password", key="new_reset_password")
-  confirm_new_password = st.text_input("Confirmer le Nouveau Mot de passe", type="password", key="confirm_reset_password")
-    
-  if st.button("Réinitialiser le mot de passe"):
+  st.subheader("Réinitialiser le Mot de Passe")
+  st.warning("Pour des raisons de sécurité, veuillez entrer votre nom d'utilisateur et votre nouveau mot de passe.")
+  
+  reset_username = st.text_input("Nom d'utilisateur", key="reset_username")
+  new_password = st.text_input("Nouveau Mot de passe", type="password", key="new_reset_password")
+  confirm_new_password = st.text_input("Confirmer le Nouveau Mot de passe", type="password", key="confirm_reset_password")
+  
+  if st.button("Réinitialiser le mot de passe"):
     conn = sqlite3.connect('comptabilite.db')
     cursor = conn.cursor()
     cursor.execute("SELECT username FROM Users WHERE username=?", (reset_username,))
-    user_exists = cursor.fetchone()
-    conn.close()
-  if not user_exists:
-    st.error("Ce nom d'utilisateur n'existe pas.")
-  elif new_password != confirm_new_password:
-    st.error("Les mots de passe ne correspondent pas.")
-  else:
+    user_exists = cursor.fetchone()
+    conn.close()
+    if not user_exists:
+      st.error("Ce nom d'utilisateur n'existe pas.")
+    elif new_password != confirm_new_password:
+      st.error("Les mots de passe ne correspondent pas.")
+    else:
     update_password(reset_username, new_password)
     st.success("Votre mot de passe a été réinitialisé avec succès ! Vous pouvez maintenant vous connecter.")
     st.session_state.show_forgot_password = False
