@@ -71,35 +71,35 @@ def create_user(username, password):
   return False
 
 def update_password(username, new_password):
-    conn = sqlite3.connect('comptabilite.db')
-    cursor = conn.cursor()
-    hashed_password = hash_password(new_password)
-    cursor.execute("UPDATE Users SET password_hash = ? WHERE username = ?", (hashed_password, username))
-    conn.commit()
-    conn.close()
+  conn = sqlite3.connect('comptabilite.db')
+  cursor = conn.cursor()
+  hashed_password = hash_password(new_password)
+  cursor.execute("UPDATE Users SET password_hash = ? WHERE username = ?", (hashed_password, username))
+  conn.commit()
+  conn.close()
 
 # --- Fonctions pour la base de données (Opérations) ---
 def add_operation(client_name, montant, taux, delais, direction, type_valeur):
-    conn = sqlite3.connect('compta.db')
-    cursor = conn.cursor()
-    montant_final = montant * (1 + taux)
-    cursor.execute("INSERT INTO Operations (client_name, montant_initial, taux_benefice, delais_date, paiements_effectues, direction, type_valeur) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                   (client_name, montant_final, taux, delais.strftime("%Y-%m-%d"), 0.0, direction, type_valeur))
-    conn.commit()
-    conn.close()
+  conn = sqlite3.connect('compta.db')
+  cursor = conn.cursor()
+  montant_final = montant * (1 + taux)
+  cursor.execute("INSERT INTO Operations (client_name, montant_initial, taux_benefice, delais_date, paiements_effectues, direction, type_valeur) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                 (client_name, montant_final, taux, delais.strftime("%Y-%m-%d"), 0.0, direction, type_valeur))
+  conn.commit()
+  conn.close()
 
 def record_payment(op_id, montant_paye):
-    conn = sqlite3.connect('compta.db')
-    cursor = conn.cursor()
-    cursor.execute("UPDATE Operations SET paiements_effectues = paiements_effectues + ? WHERE id = ?", (montant_paye, op_id))
-    conn.commit()
-    conn.close()
+  conn = sqlite3.connect('compta.db')
+  cursor = conn.cursor()
+  cursor.execute("UPDATE Operations SET paiements_effectues = paiements_effectues + ? WHERE id = ?", (montant_paye, op_id))
+  conn.commit()
+  conn.close()
 
 def get_operations():
-    conn = sqlite3.connect('compta.db')
-    df = pd.read_sql_query("SELECT * FROM Operations", conn)
-    conn.close()
-    return df
+  conn = sqlite3.connect('compta.db')
+  df = pd.read_sql_query("SELECT * FROM Operations", conn)
+  conn.close()
+  return df
 
 # --- Styles CSS personnalisés pour la page de bienvenue ---
 st.markdown("""
