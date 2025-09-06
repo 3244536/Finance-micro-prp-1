@@ -191,8 +191,8 @@ def register_page():
     if new_password == confirm_password:
       if create_user(new_username, new_password):
         st.success("Utilisateur créé avec succès ! Veuillez vous connecter.")
-        st.session_state.show_register = False
-        st.experimental_rerun()
+        st.session_state.show_register = False
+        st.experimental_rerun()
        else:
           st.error("Ce nom d'utilisateur existe déjà.")
     else:
