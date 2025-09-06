@@ -156,12 +156,11 @@ def welcome_page():
   st.markdown('<h1 class="welcome-title">Bienvenue dans Finance Micro Pro</h1>', unsafe_allow_html=True)
   st.markdown('<p class="welcome-subtitle">Gérez vos opérations, clients et bilans avec précision.</p>', unsafe_allow_html=True)
   st.markdown('</div>', unsafe_allow_html=True)
-
-  st.markdown('<div class="login-form">', unsafe_allow_html=True)
-  st.subheader("Connexion")
-    
-  username = st.text_input("Nom d'utilisateur", key="login_username")
-  password = st.text_input("Mot de passe", type="password", key="login_password")
+  st.markdown('<div class="login-form">', unsafe_allow_html=True)
+  st.subheader("Connexion")
+  
+  username = st.text_input("Nom d'utilisateur", key="login_username")
+  password = st.text_input("Mot de passe", type="password", key="login_password")
     
   col1, col2, col3 = st.columns(3)
 with col1:
