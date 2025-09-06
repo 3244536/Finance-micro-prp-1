@@ -153,9 +153,9 @@ if 'show_user_management' not in st.session_state:
 # --- Page de bienvenue et de connexion ---
 def welcome_page():
   st.markdown('<div class="welcome-container">', unsafe_allow_html=True)
-  st.markdown('<h1 class="welcome-title">Bienvenue dans Finance Micro Pro</h1>', unsafe_allow_html=True)
-  st.markdown('<p class="welcome-subtitle">Gérez vos opérations, clients et bilans avec précision.</p>', unsafe_allow_html=True)
-  st.markdown('</div>', unsafe_allow_html=True)
+  st.markdown('<h1 class="welcome-title">Bienvenue dans Finance Micro Pro</h1>', unsafe_allow_html=True)
+  st.markdown('<p class="welcome-subtitle">Gérez vos opérations, clients et bilans avec précision.</p>', unsafe_allow_html=True)
+  st.markdown('</div>', unsafe_allow_html=True)
 
   st.markdown('<div class="login-form">', unsafe_allow_html=True)
   st.subheader("Connexion")
