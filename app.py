@@ -321,39 +321,36 @@ def main_app():
                 st.markdown("---")
                 st.subheader("Enregistrer un Paiement en Espèces")
                 df_operations_credit_especes = df_operations[(df_operations['direction'] == 'Crédit') & (df_operations['type_valeur'] == 'Espèces')]
-             if not df_operations_credit_especes.empty:
-                operations_unpaid = df_operations_credit_especes[df_operations_credit_especes['montant_initial'] > df_operations_credit_especes['paiements_effectues']]
-             if not operations_unpaid.empty:
-                op_list = operations_unpaid.apply(lambda row: f"ID: {row['id']} - {row['client_name']} ({row['montant_initial'] - row['paiements_effectues']:.2f} €)", axis=1).tolist()
-                selected_op = st.selectbox("Sélectionner l'opération à payer", options=op_list)
-                
-                if selected_op:
-                    op_id = int(selected_op.split(' - ')[0].replace('ID: ', ''))
-                    solde_restant = operations_unpaid[operations_unpaid['id'] == op_id]['montant_initial'].iloc[0] - operations_unpaid[operations_unpaid['id'] == op_id]['paiements_effectues'].iloc[0]
-                    montant_paye = st.number_input(f"Montant du paiement (reste: {solde_restant:.2f} €)", min_value=0.0, max_value=solde_restant, format="%.2f")
-                    
-                    if st.button("Enregistrer le Paiement"):
-                        record_payment(op_id, montant_paye)
-                        st.success("Paiement enregistré avec succès !")
-                        st.experimental_rerun()
-            else:
-                st.info("🎉 Toutes les opérations de crédit en espèces ont été payées.")
-        else:
-            st.info("Aucune opération de crédit en espèces en cours pour le moment.")
-
+                if not df_operations_credit_especes.empty:
+                  operations_unpaid = df_operations_credit_especes[df_operations_credit_especes['montant_initial'] > df_operations_credit_especes['paiements_effectues']]
+                  if not operations_unpaid.empty:
+                    op_list = operations_unpaid.apply(lambda row: f"ID: {row['id']} - {row['client_name']} ({row['montant_initial'] - row['paiements_effectues']:.2f} €)", axis=1).tolist()
+                    selected_op = st.selectbox("Sélectionner l'opération à payer", options=op_list)
+                    if selected_op:
+                      op_id = int(selected_op.split(' - ')[0].replace('ID: ', ''))
+                      solde_restant = operations_unpaid[operations_unpaid['id'] == op_id]['montant_initial'].iloc[0] - operations_unpaid[operations_unpaid['id'] == op_id]['paiements_effectues'].iloc[0]
+                      montant_paye = st.number_input(f"Montant du paiement (reste: {solde_restant:.2f} €)", min_value=0.0, max_value=solde_restant, format="%.2f")
+                      
+                      if st.button("Enregistrer le Paiement"):
+                        record_payment(op_id, montant_paye)
+                        st.success("Paiement enregistré avec succès !")
+                        st.experimental_rerun()
+                      else:
+                        st.info("🎉 Toutes les opérations de crédit en espèces ont été payées.")
+                      else:
+                        st.info("Aucune opération de crédit en espèces en cours pour le moment.")
 # --- Page de gestion des utilisateurs (accessible uniquement par l'admin) ---
 def manage_users_page():
-    st.subheader("Gérer les Utilisateurs")
-    if st.session_state.current_user != 'admin':
-        st.warning("Vous n'avez pas les permissions pour accéder à cette page.")
-        if st.button("Retour à l'application principale"):
-            st.session_state.show_user_management = False
-            st.experimental_rerun()
-        return
-
-    st.markdown("---")
-    st.write("### Créer un Nouvel Utilisateur")
-    with st.form("create_user_form"):
+  st.subheader("Gérer les Utilisateurs")
+  if st.session_state.current_user != 'admin':
+    st.warning("Vous n'avez pas les permissions pour accéder à cette page.")
+    if st.button("Retour à l'application principale"):
+      st.session_state.show_user_management = False
+      st.experimental_rerun()
+      return
+      st.markdown("---")
+      st.write("### Créer un Nouvel Utilisateur")
+      with st.form("create_user_form"):
         new_user_username = st.text_input("Nom d'utilisateur", key="create_user_username")
         new_user_password = st.text_input("Mot de passe", type="password", key="create_user_password")
         if st.form_submit_button("Créer l'utilisateur"):
