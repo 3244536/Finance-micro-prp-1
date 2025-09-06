@@ -260,7 +260,7 @@ def main_app():
         operations_a_notifier = df_operations[(df_operations['delais_date'] < today) & (df_operations['montant_initial'] > df_operations['paiements_effectues']) & (df_operations['direction'] == 'Crédit')]
         if not operations_a_notifier.empty:
           st.error("🚨 Délai expiré pour les opérations suivantes :")
-          st.dataframe(operations_a_notifier[['client_name', 'montant_initial', 'paiements_effectues', 'delais_date']])
+          st.dataframe(operations_a_notifier[['client_name', 'montant_initial', 'paiements_effectues', 'delais_date']])
          else:
             st.success("🎉 Aucun délai expiré pour le moment.")
 
