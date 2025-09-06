@@ -266,17 +266,16 @@ def main_app():
 # --- Formulaire pour ajouter une opération ---
           st.markdown("---")
           st.subheader("Ajouter une Nouvelle Opération")
-        with st.form("ajout_operation_form"):
-          client_name = st.text_input("Nom du client", key="client_name")
-          col1, col2 = st.columns(2)
-        with col1:
-          direction = st.radio("Direction", ["Crédit", "Débit"])
-        with col2:
-          type_valeur = st.radio("Type de valeur", ["Espèces", "Nature"])
-                
-            montant = st.number_input("Montant Initial", min_value=0.0, format="%.2f", key="montant_initial")
-            taux_benefice = st.number_input("Taux de Bénéfice (%)", min_value=0.0, format="%.2f", key="taux_benefice") / 100
-            delais = st.date_input("Délai de paiement", key="delais")
+          with st.form("ajout_operation_form"):
+            client_name = st.text_input("Nom du client", key="client_name")
+            col1, col2 = st.columns(2)
+            with col1:
+              direction = st.radio("Direction", ["Crédit", "Débit"])
+            with col2:
+              type_valeur = st.radio("Type de valeur", ["Espèces", "Nature"])
+              montant = st.number_input("Montant Initial", min_value=0.0, format="%.2f", key="montant_initial")
+              taux_benefice = st.number_input("Taux de Bénéfice (%)", min_value=0.0, format="%.2f", key="taux_benefice") / 100
+              delais = st.date_input("Délai de paiement", key="delais")
             
             submitted = st.form_submit_button("Ajouter l'Opération")
             if submitted and client_name and montant > 0:
