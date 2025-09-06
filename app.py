@@ -317,13 +317,13 @@ def main_app():
                 plt.close(fig)
               else:
                 st.info("Aucune donnée de bilan à télécharger pour le moment.")
-# --- Enregistrer un paiement (uniquement pour les crédits en espèces) ---
-                st.markdown("---")
-                st.subheader("Enregistrer un Paiement en Espèces")
-                df_operations_credit_especes = df_operations[(df_operations['direction'] == 'Crédit') & (df_operations['type_valeur'] == 'Espèces')]
-              if not df_operations_credit_especes.empty:
+# --- Enregistrer un paiement (uniquement pour les crédits en espèces) --
+                st.markdown("---")
+                st.subheader("Enregistrer un Paiement en Espèces")
+                df_operations_credit_especes = df_operations[(df_operations['direction'] == 'Crédit') & (df_operations['type_valeur'] == 'Espèces')]
+             if not df_operations_credit_especes.empty:
                 operations_unpaid = df_operations_credit_especes[df_operations_credit_especes['montant_initial'] > df_operations_credit_especes['paiements_effectues']]
-              if not operations_unpaid.empty:
+             if not operations_unpaid.empty:
                 op_list = operations_unpaid.apply(lambda row: f"ID: {row['id']} - {row['client_name']} ({row['montant_initial'] - row['paiements_effectues']:.2f} €)", axis=1).tolist()
                 selected_op = st.selectbox("Sélectionner l'opération à payer", options=op_list)
                 
