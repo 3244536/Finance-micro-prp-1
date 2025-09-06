@@ -317,8 +317,7 @@ def main_app():
                 plt.close(fig)
               else:
                 st.info("Aucune donnée de bilan à télécharger pour le moment.")
-
- # --- Enregistrer un paiement (uniquement pour les crédits en espèces) ---
+# --- Enregistrer un paiement (uniquement pour les crédits en espèces) ---
                 st.markdown("---")
                 st.subheader("Enregistrer un Paiement en Espèces")
                 df_operations_credit_especes = df_operations[(df_operations['direction'] == 'Crédit') & (df_operations['type_valeur'] == 'Espèces')]
