@@ -337,8 +337,8 @@ def main_app():
                         st.experimental_rerun()
                       else:
                         st.info("🎉 Toutes les opérations de crédit en espèces ont été payées.")
-                      else:
-                        st.info("Aucune opération de crédit en espèces en cours pour le moment.")
+                    else:
+                      st.info("Aucune opération de crédit en espèces en cours pour le moment.")
 # --- Page de gestion des utilisateurs (accessible uniquement par l'admin) ---
 def manage_users_page():
   st.subheader("Gérer les Utilisateurs")
