@@ -235,7 +235,7 @@ def forgot_password_page():
 # --- Application principale ---
 def main_app():
   st.sidebar.title(f"Bienvenue, {st.session_state.current_user}!")
-  if st.sidebar.button("Se déconnecter"):
+  if st.sidebar.button("Se déconnecter"):
     st.session_state.logged_in = False
     st.experimental_rerun()
     
