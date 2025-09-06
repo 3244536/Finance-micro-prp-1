@@ -246,7 +246,7 @@ def main_app():
       st.session_state.show_user_management = True
       st.experimental_rerun()
       
- # --- Affichage conditionnel des sections de l'application ---
+# --- Affichage conditionnel des sections de l'application ---
     if st.session_state.show_user_management:
       manage_users_page()
     else:
