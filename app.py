@@ -372,14 +372,14 @@ def manage_users_page():
                 st.experimental_rerun()
 
 # --- Logique d'affichage des pages ---
-if not st.session_state.logged_in:
-    if st.session_state.show_register:
-        register_page()
-    elif st.session_state.show_forgot_password:
-        forgot_password_page()
-    else:
-        welcome_page()
-else:
-    main_app()
-init_db()
+              if not st.session_state.logged_in:
+                if st.session_state.show_register:
+                  register_page()
+                elif st.session_state.show_forgot_password:
+                  forgot_password_page()
+                else:
+                  welcome_page()
+                else:
+                  main_app()
+                  init_db()
  
