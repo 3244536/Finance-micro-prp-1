@@ -47,25 +47,25 @@ if cursor.fetchone() is None:
 def hash_password(password):
   return hashlib.sha256(password.encode()).hexdigest()
   
-  def verify_user(username, password):
+def verify_user(username, password):
+  conn = sqlite3.connect('compta.db')
+  cursor = conn.cursor()
+  cursor.execute("SELECT password_hash FROM Users WHERE username=?", (username,))
+  result = cursor.fetchone()
+  conn.close()
+  if result:
+    return result[0] == hash_password(password)
+    return False
+  
+  def create_user(username, password):
     conn = sqlite3.connect('compta.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT password_hash FROM Users WHERE username=?", (username,))
-    result = cursor.fetchone()
-    conn.close()
-    if result:
-      return result[0] == hash_password(password)
-      return False
-      
-      def create_user(username, password):
-        conn = sqlite3.connect('compta.db')
-        cursor = conn.cursor()
-        try:
-          hashed_password = hash_password(password)
-          cursor.execute("INSERT INTO Users (username, password_hash) VALUES (?, ?)", (username, hashed_password))
-          conn.commit()
-          conn.close()
-          return True
+    try:
+      hashed_password = hash_password(password):
+      cursor.execute("INSERT INTO Users (username, password_hash) VALUES (?, ?)", (username, hashed_password))
+      conn.commit()
+      conn.close()
+      return True
 except sqlite3.IntegrityError:
 conn.close()
 return False
