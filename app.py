@@ -261,8 +261,8 @@ def main_app():
         if not operations_a_notifier.empty:
           st.error("🚨 Délai expiré pour les opérations suivantes :")
           st.dataframe(operations_a_notifier[['client_name', 'montant_initial', 'paiements_effectues', 'delais_date']])
-         else:
-            st.success("🎉 Aucun délai expiré pour le moment.")
+        else:
+          st.success("🎉 Aucun délai expiré pour le moment.")
 
         # --- Formulaire pour ajouter une opération ---
         st.markdown("---")
