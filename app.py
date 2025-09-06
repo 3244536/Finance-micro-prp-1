@@ -177,7 +177,7 @@ def welcome_page():
   with col3:
     if st.button("Mot de passe oublié ?", key="forgot_password_button"):
       st.session_state.show_forgot_password = True
-      st.experimental_rerun()
+      st.experimental_rerun()
       st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Page d'enregistrement ---
