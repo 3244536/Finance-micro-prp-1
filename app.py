@@ -183,12 +183,11 @@ def welcome_page():
 # --- Page d'enregistrement ---
 def register_page():
   st.markdown('<div class="login-form">', unsafe_allow_html=True)
-  st.subheader("Créer un Nouvel Utilisateur")
+  st.subheader("Créer un Nouvel Utilisateur")
   new_username = st.text_input("Nouveau Nom d'utilisateur", key="new_username")
-  new_password = st.text_input("Nouveau Mot de passe", type="password", key="new_password")
-  confirm_password = st.text_input("Confirmer le Mot de passe", type="password", key="confirm_password")
-    
-  if st.button("Enregistrer l'utilisateur"):
+  new_password = st.text_input("Nouveau Mot de passe", type="password", key="new_password")
+  confirm_password = st.text_input("Confirmer le Mot de passe", type="password", key="confirm_password")
+  if st.button("Enregistrer l'utilisateur"):
     if new_password == confirm_password:
       if create_user(new_username, new_password):
         st.success("Utilisateur créé avec succès ! Veuillez vous connecter.")
