@@ -144,7 +144,7 @@ st.markdown("""
 if 'logged_in' not in st.session_state:
   st.session_state.logged_in = False
 if 'show_register' not in st.session_state:
-  st.session_state.show_register = False
+  st.session_state.show_register = False
 if 'show_forgot_password' not in st.session_state:
   st.session_state.show_forgot_password = False
 if 'show_user_management' not in st.session_state:
