@@ -382,4 +382,3 @@ def manage_users_page():
                 else:
                   main_app()
                   init_db()
- 
