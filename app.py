@@ -161,23 +161,22 @@ def welcome_page():
   
   username = st.text_input("Nom d'utilisateur", key="login_username")
   password = st.text_input("Mot de passe", type="password", key="login_password")
-    
-  col1, col2, col3 = st.columns(3)
-with col1:
-  if st.button("Se connecter", key="login_button"):
-    if verify_user(username, password):
-      st.session_state.logged_in = True
-      st.session_state.current_user = username
-      st.experimental_rerun()
-    else:
-      st.error("Nom d'utilisateur ou mot de passe incorrect.")
- with col2:
-   if st.button("S'inscrire", key="show_register_button"):
-     st.session_state.show_register = True
-     st.experimental_rerun()
+  col1, col2, col3 = st.columns(3)
+  with col1:
+    if st.button("Se connecter", key="login_button"):
+      if verify_user(username, password):
+        st.session_state.logged_in = True
+        st.session_state.current_user = username
+        st.experimental_rerun()
+      else:
+        st.error("Nom d'utilisateur ou mot de passe incorrect.")
+  with col2:
+    if st.button("S'inscrire", key="show_register_button"):
+       st.session_state.show_register = True
+       st.experimental_rerun()
   with col3:
-   if st.button("Mot de passe oublié ?", key="forgot_password_button"):
-      st.session_state.show_forgot_password = True
+    if st.button("Mot de passe oublié ?", key="forgot_password_button"):
+      st.session_state.show_forgot_password = True
       st.experimental_rerun()
       st.markdown('</div>', unsafe_allow_html=True)
 
