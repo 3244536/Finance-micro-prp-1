@@ -9,7 +9,7 @@ import io
 
 # --- Configuration de la base de données ---
 def init_db():
-  conn = sqlite3.connect('compta.db')
+  conn = sqlite3.connect('comptabilite.db')
   cursor = conn.cursor()
   
 # Table des opérations
@@ -48,7 +48,7 @@ def hash_password(password):
   return hashlib.sha256(password.encode()).hexdigest()
   
 def verify_user(username, password):
-  conn = sqlite3.connect('compta.db')
+  conn = sqlite3.connect('comptabilite.db')
   cursor = conn.cursor()
   cursor.execute("SELECT password_hash FROM Users WHERE username=?", (username,))
   result = cursor.fetchone()
@@ -58,7 +58,7 @@ def verify_user(username, password):
     return False
   
 def create_user(username, password):
-  conn = sqlite3.connect('compta.db')
+  conn = sqlite3.connect('comptabilite.db')
   cursor = conn.cursor()
   try:
     hashed_password = hash_password(password)
@@ -80,7 +80,7 @@ def update_password(username, new_password):
 
 # --- Fonctions pour la base de données (Opérations) ---
 def add_operation(client_name, montant, taux, delais, direction, type_valeur):
-  conn = sqlite3.connect('compta.db')
+  conn = sqlite3.connect('comptabilite.db')
   cursor = conn.cursor()
   montant_final = montant * (1 + taux)
   cursor.execute("INSERT INTO Operations (client_name, montant_initial, taux_benefice, delais_date, paiements_effectues, direction, type_valeur) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -89,14 +89,14 @@ def add_operation(client_name, montant, taux, delais, direction, type_valeur):
   conn.close()
   
 def record_payment(op_id, montant_paye):
-  conn = sqlite3.connect('compta.db')
+  conn = sqlite3.connect('comptabilite.db')
   cursor = conn.cursor()
   cursor.execute("UPDATE Operations SET paiements_effectues = paiements_effectues + ? WHERE id = ?", (montant_paye, op_id))
   conn.commit()
   conn.close()
 
 def get_operations():
-  conn = sqlite3.connect('compta.db')
+  conn = sqlite3.connect('comptabilite.db')
   df = pd.read_sql_query("SELECT * FROM Operations", conn)
   conn.close()
   return df
