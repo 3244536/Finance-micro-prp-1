@@ -245,24 +245,24 @@ def main_app():
     if st.sidebar.button("Gérer les Utilisateurs"):
       st.session_state.show_user_management = True
       st.experimental_rerun()
-    
+      
  # --- Affichage conditionnel des sections de l'application ---
-  if st.session_state.show_user_management:
-        manage_users_page()
-    else:
-        # --- Section des notifications ---
-        st.subheader("Notifications")
-        today = datetime.date.today()
-        df_operations = get_operations()
-
-        if not df_operations.empty:
-            df_operations['delais_date'] = pd.to_datetime(df_operations['delais_date']).dt.date
-            operations_a_notifier = df_operations[(df_operations['delais_date'] < today) & (df_operations['montant_initial'] > df_operations['paiements_effectues']) & (df_operations['direction'] == 'Crédit')]
-            if not operations_a_notifier.empty:
-                st.error("🚨 Délai expiré pour les opérations suivantes :")
-                st.dataframe(operations_a_notifier[['client_name', 'montant_initial', 'paiements_effectues', 'delais_date']])
-            else:
-                st.success("🎉 Aucun délai expiré pour le moment.")
+    if st.session_state.show_user_management:
+      manage_users_page()
+    else:
+ # --- Section des notifications ---
+      st.subheader("Notifications")
+      today = datetime.date.today()
+      df_operations = get_operations()
+      
+      if not df_operations.empty:
+        df_operations['delais_date'] = pd.to_datetime(df_operations['delais_date']).dt.date
+        operations_a_notifier = df_operations[(df_operations['delais_date'] < today) & (df_operations['montant_initial'] > df_operations['paiements_effectues']) & (df_operations['direction'] == 'Crédit')]
+        if not operations_a_notifier.empty:
+          st.error("🚨 Délai expiré pour les opérations suivantes :")
+          st.dataframe(operations_a_notifier[['client_name', 'montant_initial', 'paiements_effectues', 'delais_date']])
+         else:
+            st.success("🎉 Aucun délai expiré pour le moment.")
 
         # --- Formulaire pour ajouter une opération ---
         st.markdown("---")
