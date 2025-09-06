@@ -263,17 +263,16 @@ def main_app():
           st.dataframe(operations_a_notifier[['client_name', 'montant_initial', 'paiements_effectues', 'delais_date']])
         else:
           st.success("🎉 Aucun délai expiré pour le moment.")
-
-        # --- Formulaire pour ajouter une opération ---
-        st.markdown("---")
-        st.subheader("Ajouter une Nouvelle Opération")
+# --- Formulaire pour ajouter une opération ---
+          st.markdown("---")
+          st.subheader("Ajouter une Nouvelle Opération")
         with st.form("ajout_operation_form"):
-            client_name = st.text_input("Nom du client", key="client_name")
-            col1, col2 = st.columns(2)
-            with col1:
-                direction = st.radio("Direction", ["Crédit", "Débit"])
-            with col2:
-                type_valeur = st.radio("Type de valeur", ["Espèces", "Nature"])
+          client_name = st.text_input("Nom du client", key="client_name")
+          col1, col2 = st.columns(2)
+        with col1:
+          direction = st.radio("Direction", ["Crédit", "Débit"])
+        with col2:
+          type_valeur = st.radio("Type de valeur", ["Espèces", "Nature"])
                 
             montant = st.number_input("Montant Initial", min_value=0.0, format="%.2f", key="montant_initial")
             taux_benefice = st.number_input("Taux de Bénéfice (%)", min_value=0.0, format="%.2f", key="taux_benefice") / 100
