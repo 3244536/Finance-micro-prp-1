@@ -359,26 +359,26 @@ def manage_users_page():
               st.success(f"Utilisateur '{new_user_username}' créé avec succès !")
             else:
               st.error(f"Erreur : Le nom d'utilisateur '{new_user_username}' existe déjà.")
-            else:
-              st.warning("Veuillez remplir tous les champs.")
-              st.markdown("---")
-              st.write("### Liste des Utilisateurs")
-              conn = sqlite3.connect('comptabilite.db')
-              df_users = pd.read_sql_query("SELECT id, username FROM Users", conn)
-              conn.close()
-              st.dataframe(df_users, use_container_width=True)
-              if st.button("Retour à l'application principale"):
-                st.session_state.show_user_management = False
-                st.experimental_rerun()
+          else:
+            st.warning("Veuillez remplir tous les champs.")
+            st.markdown("---")
+            st.write("### Liste des Utilisateurs")
+            conn = sqlite3.connect('comptabilite.db')
+            df_users = pd.read_sql_query("SELECT id, username FROM Users", conn)
+            conn.close()
+            st.dataframe(df_users, use_container_width=True)
+            if st.button("Retour à l'application principale"):
+              st.session_state.show_user_management = False
+              st.experimental_rerun()
 
 # --- Logique d'affichage des pages ---
-              if not st.session_state.logged_in:
-                if st.session_state.show_register:
-                  register_page()
-                elif st.session_state.show_forgot_password:
-                  forgot_password_page()
+            if not st.session_state.logged_in:
+              if st.session_state.show_register:
+                register_page()
+              elif st.session_state.show_forgot_password:
+                forgot_password_page()
                 else:
-                  welcome_page()
-                else:
-                  main_app()
-                  init_db()
+                 welcome_page()
+              else:
+                main_app()
+                init_db()
