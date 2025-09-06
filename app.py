@@ -279,8 +279,8 @@ def main_app():
               submitted = st.form_submit_button("Ajouter l'Opération")
               if submitted and client_name and montant > 0:
                 add_operation(client_name, montant, taux_benefice, delais, direction, type_valeur)
-                st.success("Opération ajoutée avec succès !")
-                st.experimental_rerun()
+                st.success("Opération ajoutée avec succès !")
+                st.experimental_rerun()
 
         # --- Section de bilan ---
         st.markdown("---")
