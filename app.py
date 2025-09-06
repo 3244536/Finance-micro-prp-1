@@ -172,9 +172,9 @@ def welcome_page():
         st.error("Nom d'utilisateur ou mot de passe incorrect.")
   with col2:
     if st.button("S'inscrire", key="show_register_button"):
-       st.session_state.show_register = True
-       st.experimental_rerun()
-  with col3:
+      st.session_state.show_register = True
+      st.experimental_rerun()
+  with col3:
     if st.button("Mot de passe oublié ?", key="forgot_password_button"):
       st.session_state.show_forgot_password = True
       st.experimental_rerun()
