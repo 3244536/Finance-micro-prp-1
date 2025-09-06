@@ -146,9 +146,9 @@ if 'logged_in' not in st.session_state:
 if 'show_register' not in st.session_state:
   st.session_state.show_register = False
 if 'show_forgot_password' not in st.session_state:
-  st.session_state.show_forgot_password = False
+  st.session_state.show_forgot_password = False
 if 'show_user_management' not in st.session_state:
-  st.session_state.show_user_management = False
+  st.session_state.show_user_management = False
 
 # --- Page de bienvenue et de connexion ---
 def welcome_page():
