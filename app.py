@@ -283,7 +283,7 @@ def main_app():
                 st.experimental_rerun()
 # --- Section de bilan ---
                 st.markdown("---")
-                st.subheader("Bilan par Client")
+                st.subheader("Bilan par Client")
                 df_operations = get_operations()
               if not df_operations.empty:
                 df_operations['solde'] = df_operations.apply(
