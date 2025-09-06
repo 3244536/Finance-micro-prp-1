@@ -292,7 +292,7 @@ def main_app():
                 bilan_detaille = df_operations.groupby(['client_name', 'type_valeur']).agg(Total_Crédit=('montant_initial', lambda x: x[df_operations.loc[x.index, 'direction'] == 'Crédit'].sum()),Total_Débit=('montant_initial', lambda x: x[df_operations.loc[x.index, 'direction'] == 'Débit'].sum()),Solde_Net=('solde', 'sum')).reset_index()
                 st.dataframe(bilan_detaille, use_container_width=True)
                 st.markdown("---")
-                st.subheader("Solde Total par Client")
+                st.subheader("Solde Total par Client")
                 bilan_global = df_operations.groupby('client_name').agg(
                 Solde_Total=('solde', 'sum')
             ).reset_index()
