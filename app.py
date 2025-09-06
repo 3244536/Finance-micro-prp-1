@@ -98,8 +98,8 @@ def record_payment(op_id, montant_paye):
 def get_operations():
   conn = sqlite3.connect('compta.db')
   df = pd.read_sql_query("SELECT * FROM Operations", conn)
-  conn.close()
-  return df
+  conn.close()
+  return df
 
 # --- Styles CSS personnalisés pour la page de bienvenue ---
 st.markdown("""
