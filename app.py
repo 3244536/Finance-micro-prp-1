@@ -37,11 +37,11 @@ def init_db():
 
 # Créer un utilisateur administrateur par défaut si aucun utilisateur n'existe
   cursor.execute("SELECT * FROM Users WHERE username='admin'")
-    if cursor.fetchone() is None:
-      hashed_password = hashlib.sha256("admin".encode()).hexdigest()
-      cursor.execute("INSERT INTO Users (username, password_hash) VALUES (?, ?)", ('admin', hashed_password))
-      conn.commit()
-      conn.close()
+  if cursor.fetchone() is None:
+    hashed_password = hashlib.sha256("admin".encode()).hexdigest()
+    cursor.execute("INSERT INTO Users (username, password_hash) VALUES (?, ?)", ('admin', hashed_password))
+    conn.commit()
+    conn.close()
 
 # --- Fonctions d'authentification ---
 def hash_password(password):
