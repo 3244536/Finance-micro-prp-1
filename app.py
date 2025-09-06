@@ -265,7 +265,7 @@ def main_app():
           st.success("🎉 Aucun délai expiré pour le moment.")
 # --- Formulaire pour ajouter une opération ---
           st.markdown("---")
-          st.subheader("Ajouter une Nouvelle Opération")
+          st.subheader("Ajouter une Nouvelle Opération")
         with st.form("ajout_operation_form"):
           client_name = st.text_input("Nom du client", key="client_name")
           col1, col2 = st.columns(2)
