@@ -284,8 +284,8 @@ def main_app():
 # --- Section de bilan ---
                 st.markdown("---")
                 st.subheader("Bilan par Client")
-                df_operations = get_operations()
-              if not df_operations.empty:
+                df_operations = get_operations()
+              if not df_operations.empty:
                 df_operations['solde'] = df_operations.apply(
                   lambda row: row['montant_initial'] - row['paiements_effectues'] if row['direction'] == 'Crédit' else row['paiements_effectues'] - row['montant_initial'],
                   axis=1
