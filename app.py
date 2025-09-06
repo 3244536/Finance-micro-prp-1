@@ -81,19 +81,19 @@ def update_password(username, new_password):
 # --- Fonctions pour la base de données (Opérations) ---
 def add_operation(client_name, montant, taux, delais, direction, type_valeur):
   conn = sqlite3.connect('compta.db')
-  cursor = conn.cursor()
-  montant_final = montant * (1 + taux)
-  cursor.execute("INSERT INTO Operations (client_name, montant_initial, taux_benefice, delais_date, paiements_effectues, direction, type_valeur) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  cursor = conn.cursor()
+  montant_final = montant * (1 + taux)
+  cursor.execute("INSERT INTO Operations (client_name, montant_initial, taux_benefice, delais_date, paiements_effectues, direction, type_valeur) VALUES (?, ?, ?, ?, ?, ?, ?)",
                  (client_name, montant_final, taux, delais.strftime("%Y-%m-%d"), 0.0, direction, type_valeur))
-  conn.commit()
-  conn.close()
-
+  conn.commit()
+  conn.close()
+  
 def record_payment(op_id, montant_paye):
   conn = sqlite3.connect('compta.db')
-  cursor = conn.cursor()
-  cursor.execute("UPDATE Operations SET paiements_effectues = paiements_effectues + ? WHERE id = ?", (montant_paye, op_id))
-  conn.commit()
-  conn.close()
+  cursor = conn.cursor()
+  cursor.execute("UPDATE Operations SET paiements_effectues = paiements_effectues + ? WHERE id = ?", (montant_paye, op_id))
+  conn.commit()
+  conn.close()
 
 def get_operations():
   conn = sqlite3.connect('compta.db')
