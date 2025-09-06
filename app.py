@@ -288,14 +288,9 @@ def main_app():
               if not df_operations.empty:
                 df_operations['solde'] = df_operations.apply(
                   lambda row: row['montant_initial'] - row['paiements_effectues'] if row['direction'] == 'Crédit' else row['paiements_effectues'] - row['montant_initial'],
-                  axis=1
-            )
-            
-            bilan_detaille = df_operations.groupby(['client_name', 'type_valeur']).agg(
-                Total_Crédit=('montant_initial', lambda x: x[df_operations.loc[x.index, 'direction'] == 'Crédit'].sum()),
-                Total_Débit=('montant_initial', lambda x: x[df_operations.loc[x.index, 'direction'] == 'Débit'].sum()),
-                Solde_Net=('solde', 'sum')
-            ).reset_index()
+                  axis=1)
+                bilan_detaille = df_operations.groupby(['client_name', 'type_valeur']).agg(Total_Crédit=('montant_initial', lambda x: x[df_operations.loc[x.index, 'direction'] == 'Crédit'].sum()),
+                Total_Débit=('montant_initial', lambda x: x[df_operations.loc[x.index, 'direction'] == 'Débit'].sum()),Solde_Net=('solde', 'sum')).reset_index()
             
             st.dataframe(bilan_detaille, use_container_width=True)
             
