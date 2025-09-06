@@ -377,8 +377,8 @@ def manage_users_page():
                 register_page()
               elif st.session_state.show_forgot_password:
                 forgot_password_page()
-                else:
-                 welcome_page()
               else:
-                main_app()
-                init_db()
+                 welcome_page()
+            else:
+              main_app()
+              init_db()
