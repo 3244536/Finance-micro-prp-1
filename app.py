@@ -238,8 +238,8 @@ def main_app():
   if st.sidebar.button("Se déconnecter"):
     st.session_state.logged_in = False
     st.experimental_rerun()
-    
-# Bouton pour créer des utilisateurs (visible uniquement pour l'admin)
+    
+# --- Bouton pour créer des utilisateurs (visible uniquement pour l'admin)
   if st.session_state.current_user == 'admin':
     st.sidebar.markdown("---")
     if st.sidebar.button("Gérer les Utilisateurs"):
