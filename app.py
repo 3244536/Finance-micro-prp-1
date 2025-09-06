@@ -314,7 +314,7 @@ def main_app():
                 st.download_button(
                   label="Télécharger la situation en image", data=buf.getvalue(), file_name="situation_clients.png", mime="image/png"
                   )
-                plt.close(fig)
+                plt.close(fig)
               else:
                 st.info("Aucune donnée de bilan à télécharger pour le moment.")
 
