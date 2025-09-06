@@ -302,21 +302,13 @@ def main_app():
               if not bilan_detaille.empty:
                 data_for_image = bilan_detaille[['client_name', 'type_valeur', 'Solde_Net']].copy()
                 data_for_image['Solde_Net'] = data_for_image['Solde_Net'].apply(lambda x: f"{x:,.2f} €")
-                
-                fig, ax = plt.subplots(figsize=(10, len(data_for_image) * 0.5 + 1))
-                ax.axis('off')
-
-                table = ax.table(cellText=data_for_image.values,
-                                 colLabels=data_for_image.columns,
-                                 cellLoc = 'center', 
-                                 loc = 'center',
-                                 colColours=["#f5f5f5"]*len(data_for_image.columns))
-                
+                fig, ax = plt.subplots(figsize=(10, len(data_for_image) * 0.5 + 1))
+                ax.axis('off')
+                table = ax.table(cellText=data_for_image.values,colLabels=data_for_image.columns, cellLoc = 'center', loc = 'center', colColours=["#f5f5f5"]*len(data_for_image.columns))
                 table.auto_set_font_size(False)
-                table.set_fontsize(12)
-                table.scale(1.2, 1.2)
-                
-                ax.set_title("Situation Clients - Finance Micro Pro", fontsize=16, pad=20)
+                table.set_fontsize(12)
+                table.scale(1.2, 1.2)
+                ax.set_title("Situation Clients - Finance Micro Pro", fontsize=16, pad=20)
                 
                 buf = io.BytesIO()
                 plt.savefig(buf, format="png", bbox_inches='tight', dpi=300)
