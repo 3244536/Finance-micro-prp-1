@@ -51,24 +51,24 @@ def hash_password(password):
     conn = sqlite3.connect('compta.db')
     cursor = conn.cursor()
     cursor.execute("SELECT password_hash FROM Users WHERE username=?", (username,))
-    result = cursor.fetchone()
-    conn.close()
-    if result:
-        return result[0] == hash_password(password)
-    return False
-
-def create_user(username, password):
-    conn = sqlite3.connect('compta.db')
-    cursor = conn.cursor()
-    try:
-        hashed_password = hash_password(password)
-        cursor.execute("INSERT INTO Users (username, password_hash) VALUES (?, ?)", (username, hashed_password))
-        conn.commit()
-        conn.close()
-        return True
-    except sqlite3.IntegrityError:
-        conn.close()
-        return False
+    result = cursor.fetchone()
+    conn.close()
+    if result:
+      return result[0] == hash_password(password)
+      return False
+      
+      def create_user(username, password):
+        conn = sqlite3.connect('compta.db')
+        cursor = conn.cursor()
+        try:
+          hashed_password = hash_password(password)
+          cursor.execute("INSERT INTO Users (username, password_hash) VALUES (?, ?)", (username, hashed_password))
+          conn.commit()
+          conn.close()
+          return True
+except sqlite3.IntegrityError:
+conn.close()
+return False
 
 def update_password(username, new_password):
     conn = sqlite3.connect('comptabilite.db')
