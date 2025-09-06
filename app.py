@@ -10,21 +10,21 @@ import io
 # --- Configuration de la base de données ---
 def init_db():
   conn = sqlite3.connect('compta.db')
-    cursor = conn.cursor()
-    
-    # Table des opérations
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Operations (
-            id INTEGER PRIMARY KEY,
-            client_name TEXT NOT NULL,
-            montant_initial REAL NOT NULL,
-            taux_benefice REAL NOT NULL,
-            delais_date TEXT NOT NULL,
-            paiements_effectues REAL NOT NULL DEFAULT 0.0,
-            direction TEXT NOT NULL,
-            type_valeur TEXT NOT NULL
-        )
-    """)
+  cursor = conn.cursor()
+  
+# Table des opérations
+  cursor.execute("""
+    CREATE TABLE IF NOT EXISTS Operations (
+    id INTEGER PRIMARY KEY,
+    client_name TEXT NOT NULL,
+    montant_initial REAL NOT NULL,
+    taux_benefice REAL NOT NULL,
+    delais_date TEXT NOT NULL,
+    paiements_effectues REAL NOT NULL DEFAULT 0.0,
+    direction TEXT NOT NULL,
+    type_valeur TEXT NOT NULL
+    )
+    """)
     
     # Table des utilisateurs
     cursor.execute("""
