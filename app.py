@@ -250,7 +250,7 @@ def main_app():
     if st.session_state.show_user_management:
       manage_users_page()
     else:
- # --- Section des notifications ---
+# --- Section des notifications ---
       st.subheader("Notifications")
       today = datetime.date.today()
       df_operations = get_operations()
