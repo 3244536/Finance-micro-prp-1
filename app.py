@@ -309,17 +309,13 @@ def main_app():
                 table.set_fontsize(12)
                 table.scale(1.2, 1.2)
                 ax.set_title("Situation Clients - Finance Micro Pro", fontsize=16, pad=20)
-                
-                buf = io.BytesIO()
-                plt.savefig(buf, format="png", bbox_inches='tight', dpi=300)
-                st.download_button(
-                    label="Télécharger la situation en image",
-                    data=buf.getvalue(),
-                    file_name="situation_clients.png",
-                    mime="image/png"
-                )
+                buf = io.BytesIO()
+                plt.savefig(buf, format="png", bbox_inches='tight', dpi=300)
+                st.download_button(
+                  label="Télécharger la situation en image", data=buf.getvalue(), file_name="situation_clients.png", mime="image/png"
+                  )
                 plt.close(fig)
-            else:
+              else:
                 st.info("Aucune donnée de bilan à télécharger pour le moment.")
 
         # --- Enregistrer un paiement (uniquement pour les crédits en espèces) ---
