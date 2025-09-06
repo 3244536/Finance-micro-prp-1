@@ -67,8 +67,8 @@ def create_user(username, password):
     conn.close()
     return True
   except sqlite3.IntegrityError:
-  conn.close()
-  return False
+    conn.close()
+    return False
 
 def update_password(username, new_password):
   conn = sqlite3.connect('comptabilite.db')
