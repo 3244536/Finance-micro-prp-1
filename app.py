@@ -61,7 +61,7 @@ def create_user(username, password):
   conn = sqlite3.connect('compta.db')
   cursor = conn.cursor()
   try:
-    hashed_password = hash_password(password):
+    hashed_password = hash_password(password)
     ursor.execute("INSERT INTO Users (username, password_hash) VALUES (?, ?)", (username, hashed_password))
     conn.commit()
     conn.close()
