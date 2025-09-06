@@ -298,7 +298,7 @@ def main_app():
 
 # --- Bouton de téléchargement de la situation client en image ---
                 st.markdown("---")
-                st.subheader("Télécharger la Situation Client")
+                st.subheader("Télécharger la Situation Client")
               if not bilan_detaille.empty:
                 data_for_image = bilan_detaille[['client_name', 'type_valeur', 'Solde_Net']].copy()
                 data_for_image['Solde_Net'] = data_for_image['Solde_Net'].apply(lambda x: f"{x:,.2f} €")
