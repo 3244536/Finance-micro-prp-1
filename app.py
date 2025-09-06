@@ -142,46 +142,45 @@ st.markdown("""
 
 # --- Initialisation de la session d'état ---
 if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
+  st.session_state.logged_in = False
 if 'show_register' not in st.session_state:
-    st.session_state.show_register = False
+  st.session_state.show_register = False
 if 'show_forgot_password' not in st.session_state:
-    st.session_state.show_forgot_password = False
+  st.session_state.show_forgot_password = False
 if 'show_user_management' not in st.session_state:
-    st.session_state.show_user_management = False
+  st.session_state.show_user_management = False
 
 # --- Page de bienvenue et de connexion ---
 def welcome_page():
-    st.markdown('<div class="welcome-container">', unsafe_allow_html=True)
-    st.markdown('<h1 class="welcome-title">Bienvenue dans Finance Micro Pro</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="welcome-subtitle">Gérez vos opérations, clients et bilans avec précision.</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+  st.markdown('<div class="welcome-container">', unsafe_allow_html=True)
+  st.markdown('<h1 class="welcome-title">Bienvenue dans Finance Micro Pro</h1>', unsafe_allow_html=True)
+  st.markdown('<p class="welcome-subtitle">Gérez vos opérations, clients et bilans avec précision.</p>', unsafe_allow_html=True)
+  st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="login-form">', unsafe_allow_html=True)
-    st.subheader("Connexion")
+  st.markdown('<div class="login-form">', unsafe_allow_html=True)
+  st.subheader("Connexion")
     
-    username = st.text_input("Nom d'utilisateur", key="login_username")
-    password = st.text_input("Mot de passe", type="password", key="login_password")
+  username = st.text_input("Nom d'utilisateur", key="login_username")
+  password = st.text_input("Mot de passe", type="password", key="login_password")
     
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("Se connecter", key="login_button"):
-            if verify_user(username, password):
-                st.session_state.logged_in = True
-                st.session_state.current_user = username
-                st.experimental_rerun()
-            else:
-                st.error("Nom d'utilisateur ou mot de passe incorrect.")
-    with col2:
-        if st.button("S'inscrire", key="show_register_button"):
-            st.session_state.show_register = True
-            st.experimental_rerun()
-    with col3:
-        if st.button("Mot de passe oublié ?", key="forgot_password_button"):
-            st.session_state.show_forgot_password = True
-            st.experimental_rerun()
-            
-    st.markdown('</div>', unsafe_allow_html=True)
+  col1, col2, col3 = st.columns(3)
+with col1:
+  if st.button("Se connecter", key="login_button"):
+    if verify_user(username, password):
+      st.session_state.logged_in = True
+      st.session_state.current_user = username
+      st.experimental_rerun()
+    else:
+      st.error("Nom d'utilisateur ou mot de passe incorrect.")
+ with col2:
+   if st.button("S'inscrire", key="show_register_button"):
+     st.session_state.show_register = True
+     st.experimental_rerun()
+  with col3:
+   if st.button("Mot de passe oublié ?", key="forgot_password_button"):
+      st.session_state.show_forgot_password = True
+      st.experimental_rerun()
+      st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Page d'enregistrement ---
 def register_page():
