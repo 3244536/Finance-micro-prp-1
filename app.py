@@ -27,13 +27,13 @@ def init_db():
     """)
   
 # Table des utilisateurs
-cursor.execute(""
+cursor.execute("""
   CREATE TABLE IF NOT EXISTS Users (
   id INTEGER PRIMARY KEY,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL
   )
-  "")
+  """)
 
 # Créer un utilisateur administrateur par défaut si aucun utilisateur n'existe
 cursor.execute("SELECT * FROM Users WHERE username='admin'")
