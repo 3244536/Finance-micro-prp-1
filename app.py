@@ -224,13 +224,13 @@ def forgot_password_page():
       st.error("Les mots de passe ne correspondent pas.")
     else:
     update_password(reset_username, new_password)
-    st.success("Votre mot de passe a été réinitialisé avec succès ! Vous pouvez maintenant vous connecter.")
-    st.session_state.show_forgot_password = False
-    st.experimental_rerun()
-  if st.button("Retour à la connexion"):
+    st.success("Votre mot de passe a été réinitialisé avec succès ! Vous pouvez maintenant vous connecter.")
     st.session_state.show_forgot_password = False
-    st.experimental_rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.experimental_rerun()
+    if st.button("Retour à la connexion"):
+      st.session_state.show_forgot_password = False
+      st.experimental_rerun()
+      st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Application principale ---
 def main_app():
