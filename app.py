@@ -9,6 +9,7 @@ import io
 
 # --- Configuration de la base de données ---
 def init_db():
+  init_db():
     conn= sqlite3.connect('comptabilite.db')
     cursor = conn.cursor()
     
@@ -423,5 +424,5 @@ if not st.session_state.logged_in:
 else:
     main_app()
 
-init_db()
+
  
