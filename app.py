@@ -234,20 +234,20 @@ def forgot_password_page():
 
 # --- Application principale ---
 def main_app():
-    st.sidebar.title(f"Bienvenue, {st.session_state.current_user}!")
-    if st.sidebar.button("Se déconnecter"):
-        st.session_state.logged_in = False
-        st.experimental_rerun()
+  st.sidebar.title(f"Bienvenue, {st.session_state.current_user}!")
+  if st.sidebar.button("Se déconnecter"):
+    st.session_state.logged_in = False
+    st.experimental_rerun()
     
-    # Bouton pour créer des utilisateurs (visible uniquement pour l'admin)
-    if st.session_state.current_user == 'admin':
-        st.sidebar.markdown("---")
-        if st.sidebar.button("Gérer les Utilisateurs"):
-            st.session_state.show_user_management = True
-            st.experimental_rerun()
+# Bouton pour créer des utilisateurs (visible uniquement pour l'admin)
+  if st.session_state.current_user == 'admin':
+    st.sidebar.markdown("---")
+    if st.sidebar.button("Gérer les Utilisateurs"):
+      st.session_state.show_user_management = True
+      st.experimental_rerun()
     
-    # --- Affichage conditionnel des sections de l'application ---
-    if st.session_state.show_user_management:
+ # --- Affichage conditionnel des sections de l'application ---
+  if st.session_state.show_user_management:
         manage_users_page()
     else:
         # --- Section des notifications ---
