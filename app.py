@@ -193,14 +193,14 @@ def register_page():
         st.success("Utilisateur créé avec succès ! Veuillez vous connecter.")
         st.session_state.show_register = False
         st.experimental_rerun()
-       else:
-          st.error("Ce nom d'utilisateur existe déjà.")
+      else:
+        st.error("Ce nom d'utilisateur existe déjà.")
     else:
-        st.error("Les mots de passe ne correspondent pas.")
-        if st.button("Retour à la connexion"):
-          st.session_state.show_register = False
-          st.experimental_rerun()
-          st.markdown('</div>', unsafe_allow_html=True)
+      st.error("Les mots de passe ne correspondent pas.")
+      if st.button("Retour à la connexion"):
+        st.session_state.show_register = False
+        st.experimental_rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Page de réinitialisation de mot de passe ---
 def forgot_password_page():
