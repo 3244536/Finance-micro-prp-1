@@ -45,12 +45,12 @@ if cursor.fetchone() is None:
 
 # --- Fonctions d'authentification ---
 def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def verify_user(username, password):
-    conn = sqlite3.connect('compta.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT password_hash FROM Users WHERE username=?", (username,))
+  return hashlib.sha256(password.encode()).hexdigest()
+  
+  def verify_user(username, password):
+    conn = sqlite3.connect('compta.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT password_hash FROM Users WHERE username=?", (username,))
     result = cursor.fetchone()
     conn.close()
     if result:
