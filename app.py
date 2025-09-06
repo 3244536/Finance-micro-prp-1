@@ -166,8 +166,8 @@ def welcome_page():
     if st.button("Se connecter", key="login_button"):
       if verify_user(username, password):
         st.session_state.logged_in = True
-        st.session_state.current_user = username
-        st.experimental_rerun()
+        st.session_state.current_user = username
+        st.experimental_rerun()
       else:
         st.error("Nom d'utilisateur ou mot de passe incorrect.")
   with col2:
