@@ -281,15 +281,14 @@ def main_app():
                 add_operation(client_name, montant, taux_benefice, delais, direction, type_valeur)
                 st.success("Opération ajoutée avec succès !")
                 st.experimental_rerun()
-
-        # --- Section de bilan ---
-        st.markdown("---")
-        st.subheader("Bilan par Client")
-        df_operations = get_operations()
-        if not df_operations.empty:
-            df_operations['solde'] = df_operations.apply(
-                lambda row: row['montant_initial'] - row['paiements_effectues'] if row['direction'] == 'Crédit' else row['paiements_effectues'] - row['montant_initial'],
-                axis=1
+# --- Section de bilan ---
+                st.markdown("---")
+                st.subheader("Bilan par Client")
+                df_operations = get_operations()
+              if not df_operations.empty:
+                df_operations['solde'] = df_operations.apply(
+                  lambda row: row['montant_initial'] - row['paiements_effectues'] if row['direction'] == 'Crédit' else row['paiements_effectues'] - row['montant_initial'],
+                  axis=1
             )
             
             bilan_detaille = df_operations.groupby(['client_name', 'type_valeur']).agg(
