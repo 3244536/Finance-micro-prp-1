@@ -351,27 +351,25 @@ def manage_users_page():
       st.markdown("---")
       st.write("### Créer un Nouvel Utilisateur")
       with st.form("create_user_form"):
-        new_user_username = st.text_input("Nom d'utilisateur", key="create_user_username")
-        new_user_password = st.text_input("Mot de passe", type="password", key="create_user_password")
-        if st.form_submit_button("Créer l'utilisateur"):
-            if new_user_username and new_user_password:
-                if create_user(new_user_username, new_user_password):
-                    st.success(f"Utilisateur '{new_user_username}' créé avec succès !")
-                else:
-                    st.error(f"Erreur : Le nom d'utilisateur '{new_user_username}' existe déjà.")
-            else:
-                st.warning("Veuillez remplir tous les champs.")
-
-    st.markdown("---")
-    st.write("### Liste des Utilisateurs")
-    conn = sqlite3.connect('comptabilite.db')
-    df_users = pd.read_sql_query("SELECT id, username FROM Users", conn)
-    conn.close()
-    st.dataframe(df_users, use_container_width=True)
-
-    if st.button("Retour à l'application principale"):
-        st.session_state.show_user_management = False
-        st.experimental_rerun()
+        new_user_username = st.text_input("Nom d'utilisateur", key="create_user_username")
+        new_user_password = st.text_input("Mot de passe", type="password", key="create_user_password")
+        if st.form_submit_button("Créer l'utilisateur"):
+          if new_user_username and new_user_password:
+            if create_user(new_user_username, new_user_password):
+              st.success(f"Utilisateur '{new_user_username}' créé avec succès !")
+            else:
+              st.error(f"Erreur : Le nom d'utilisateur '{new_user_username}' existe déjà.")
+            else:
+              st.warning("Veuillez remplir tous les champs.")
+              st.markdown("---")
+              st.write("### Liste des Utilisateurs")
+              conn = sqlite3.connect('comptabilite.db')
+              df_users = pd.read_sql_query("SELECT id, username FROM Users", conn)
+              conn.close()
+              st.dataframe(df_users, use_container_width=True)
+              if st.button("Retour à l'application principale"):
+                st.session_state.show_user_management = False
+                st.experimental_rerun()
 
 # --- Logique d'affichage des pages ---
 if not st.session_state.logged_in:
