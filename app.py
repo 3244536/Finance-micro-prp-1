@@ -75,8 +75,8 @@ def update_password(username, new_password):
   cursor = conn.cursor()
   hashed_password = hash_password(new_password)
   cursor.execute("UPDATE Users SET password_hash = ? WHERE username = ?", (hashed_password, username))
-  conn.commit()
-  conn.close()
+  conn.commit()
+  conn.close()
 
 # --- Fonctions pour la base de données (Opérations) ---
 def add_operation(client_name, montant, taux, delais, direction, type_valeur):
