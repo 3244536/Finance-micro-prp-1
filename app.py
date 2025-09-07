@@ -274,4 +274,256 @@ def main():
         st.session_state.form_submitted = False
     
     # PAGE ACCUEIL - Détails des ventes
-    if
+    if st.session_state.current_page == "Accueil":
+        st.header("🏠 Tableau de Bord - Toutes les Ventes")
+        
+        ventes = get_all_ventes()
+        
+        if not ventes.empty:
+            for _, vente in ventes.iterrows():
+                solde_restant = calculer_solde_restant(vente['id'])
+                statut_color = "🟢" if vente['statut'] == 'Payé' else "🟠"
+                
+                with st.expander(f"{statut_color} Vente #{vente['id']} - {vente['client_nom']} - {vente['montant_total']:,.0f} UM - {vente['statut']}"):
+                    # Style différent pour les ventes soldées
+                    if vente['statut'] == 'Payé':
+                        st.success("✅ Vente entièrement payée")
+                    else:
+                        st.warning(f"⏳ Solde restant: {solde_restant:,.0f} UM")
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.write(f"**Client:** {vente['client_nom']}")
+                        st.write(f"**Téléphone:** {vente['telephone'] or 'Non renseigné'}")
+                        st.write(f"**Valeur marchandise:** {vente['valeur_marchandise']:,.0f} UM")
+                        st.write(f"**Taux bénéfice:** {vente['taux_benefice_mensuel']*100}% par mois")
+                    
+                    with col2:
+                        st.write(f"**Durée:** {vente['duree_mois']} mois")
+                        st.write(f"**Montant total:** {vente['montant_total']:,.0f} UM")
+                        st.write(f"**Mensualité:** {vente['mensualite']:,.0f} UM")
+                        st.write(f"**Date vente:** {vente['date_vente']}")
+                    
+                    # Description de la vente
+                    if 'description_vente' in vente and vente['description_vente']:
+                        st.write(f"**Description:** {vente['description_vente']}")
+                    
+                    # Paiements effectués
+                    paiements = get_paiements_vente(vente['id'])
+                    if not paiements.empty:
+                        st.subheader("💳 Paiements effectués")
+                        for _, paiement in paiements.iterrows():
+                            st.write(f"- Mois {paiement['mois_numero']}: {paiement['montant_paye']:,.0f} UM "
+                                     f"({paiement['type_paiement']}) - {paiement['date_paiement']}")
+                            if 'description_paiement' in paiement and paiement['description_paiement']:
+                                st.caption(f"  *{paiement['description_paiement']}*")
+                    
+                    # Échéancier théorique
+                    st.subheader("📅 Échéancier théorique")
+                    echeancier = generer_echeancier(
+                        vente['valeur_marchandise'], 
+                        vente['taux_benefice_mensuel'], 
+                        vente['duree_mois']
+                    )
+                    st.dataframe(echeancier, use_container_width=True)
+        else:
+            st.info("Aucune vente enregistrée")
+    
+    # PAGE CLIENTS
+    elif st.session_state.current_page == "Clients":
+        st.header("👥 Gestion des Clients")
+        
+        # Formulaire nouveau client
+        with st.form("nouveau_client_form", clear_on_submit=True):
+            st.subheader("➕ Nouveau Client")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                nom = st.text_input("Nom complet *", placeholder="Nom et prénom", key="client_nom")
+                telephone = st.text_input("Téléphone", placeholder="+222 XX XX XX XX", key="client_tel")
+            
+            with col2:
+                description = st.text_area("Description", placeholder="Informations supplémentaires...", 
+                                         height=100, key="client_desc")
+            
+            submitted = st.form_submit_button("✅ Enregistrer le client")
+            
+            if submitted:
+                if nom:
+                    ajouter_client(nom, telephone, description)
+                    st.success(f"Client {nom} enregistré avec succès !")
+                    st.session_state.form_submitted = True
+                else:
+                    st.error("Le nom du client est obligatoire")
+        
+        # Liste des clients
+        st.subheader("📋 Liste des Clients")
+        clients = get_clients()
+        
+        if not clients.empty:
+            for _, client in clients.iterrows():
+                with st.expander(f"{client['nom']} - {client['telephone'] or 'Sans téléphone'}"):
+                    st.write(f"**Description:** {client['description'] or 'Aucune'}")
+                    st.write(f"**Date création:** {client['date_creation']}")
+                    
+                    # Ventes du client
+                    ventes = get_ventes_client(client['id'])
+                    if not ventes.empty:
+                        st.subheader("Ventes")
+                        for _, vente in ventes.iterrows():
+                            solde = calculer_solde_restant(vente['id'])
+                            statut_emoji = "✅" if vente['statut'] == 'Payé' else "⏳"
+                            st.write(f"{statut_emoji} **Vente #{vente['id']}:** {vente['montant_total']:,.0f} UM - "
+                                     f"Solde: {solde:,.0f} UM - {vente['statut']}")
+        else:
+            st.info("Aucun client enregistré")
+    
+    # PAGE VENTES
+    elif st.session_state.current_page == "Ventes":
+        st.header("🛒 Nouvelle Vente à Terme")
+        
+        clients = get_clients()
+        
+        if clients.empty:
+            st.warning("Aucun client enregistré. Veuillez d'abord créer un client.")
+        else:
+            with st.form("nouvelle_vente_form", clear_on_submit=True):
+                # Sélection du client avec boutons
+                st.subheader("Sélection du Client")
+                client_cols = st.columns(2)
+                client_id = None
+                
+                for i, (_, client) in enumerate(clients.iterrows()):
+                    with client_cols[i % 2]:
+                        if st.button(f"{client['nom']} ({client['telephone'] or 'No tel'})", 
+                                     key=f"client_{client['id']}", use_container_width=True):
+                            client_id = client['id']
+                            st.session_state.selected_client = client_id
+                
+                if 'selected_client' in st.session_state:
+                    client_id = st.session_state.selected_client
+                    client_info = get_client_by_id(client_id)
+                    st.info(f"Client sélectionné: {client_info[1]} - {client_info[2] or 'No tel'}")
+                
+                st.subheader("Détails de la Vente")
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    valeur_marchandise = st.number_input("Valeur marchandise (UM) *", 
+                                                         min_value=0.0, format="%.0f", value=1000000.0)
+                
+                with col2:
+                    taux_benefice = st.number_input("Taux bénéfice mensuel (%) *", 
+                                                    min_value=0.0, max_value=100.0, value=8.0, step=0.5) / 100
+                
+                with col3:
+                    duree_mois = st.number_input("Durée (mois) *", min_value=1, value=6)
+                
+                description_vente = st.text_area("Description de la vente", 
+                                                 placeholder="Décrivez la marchandise ou le service...")
+                
+                submitted = st.form_submit_button("✅ Créer la vente")
+                
+                if submitted and client_id:
+                    if valeur_marchandise > 0 and duree_mois > 0:
+                        vente_id, montant_total, mensualite = creer_vente_terme(
+                            client_id, valeur_marchandise, taux_benefice, duree_mois, description_vente
+                        )
+                        
+                        st.success(f"Vente créée avec succès ! ID: {vente_id}")
+                        
+                        # Affichage des détails
+                        st.subheader("📋 Détails de la vente")
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric("Valeur marchandise", f"{valeur_marchandise:,.0f} UM")
+                        col2.metric("Montant total", f"{montant_total:,.0f} UM")
+                        col3.metric("Mensualité", f"{mensualite:,.0f} UM")
+                        
+                        # Échéancier
+                        st.subheader("📅 Échéancier de paiement")
+                        echeancier = generer_echeancier(valeur_marchandise, taux_benefice, duree_mois)
+                        st.dataframe(echeancier, use_container_width=True)
+                        
+                        st.session_state.form_submitted = True
+                        if 'selected_client' in st.session_state:
+                            del st.session_state.selected_client
+                    else:
+                        st.error("Veuillez remplir tous les champs correctement")
+    
+    # PAGE PAIEMENTS
+    elif st.session_state.current_page == "Paiements":
+        st.header("💳 Enregistrement de Paiement")
+        
+        ventes = get_all_ventes()
+        ventes_en_cours = ventes[ventes['statut'] == 'En cours']
+        
+        if ventes_en_cours.empty:
+            st.warning("Aucune vente en cours nécessitant un paiement.")
+        else:
+            # Sélection de la vente avec boutons
+            st.subheader("Sélectionner une Vente")
+            vente_cols = st.columns(2)
+            selected_vente = None
+            
+            for i, (_, vente) in enumerate(ventes_en_cours.iterrows()):
+                with vente_cols[i % 2]:
+                    client_info = get_client_by_id(vente['client_id'])
+                    if st.button(f"Vente #{vente['id']} - {client_info[1]} - {vente['montant_total']:,.0f} UM", 
+                                 key=f"vente_{vente['id']}", use_container_width=True):
+                        selected_vente = vente
+                        st.session_state.selected_vente = vente['id']
+            
+            if 'selected_vente' in st.session_state:
+                vente_id = st.session_state.selected_vente
+                vente_info = ventes[ventes['id'] == vente_id].iloc[0]
+                solde_restant = calculer_solde_restant(vente_id)
+                client_info = get_client_by_id(vente_info['client_id'])
+                
+                st.success(f"Vente sélectionnée: #{vente_id} - {client_info[1]}")
+                
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Montant total", f"{vente_info['montant_total']:,.0f} UM")
+                col2.metric("Mensualité normale", f"{vente_info['mensualite']:,.0f} UM")
+                col3.metric("Solde restant", f"{solde_restant:,.0f} UM")
+                
+                # Formulaire de paiement
+                with st.form("paiement_form", clear_on_submit=True):
+                    type_paiement = st.radio("Type de paiement", ["Mensualité", "Paiement anticipé"])
+                    
+                    if type_paiement == "Mensualité":
+                        mois_numero = st.number_input("Numéro du mois", min_value=1, 
+                                                      max_value=vente_info['duree_mois'], value=1)
+                        montant = st.number_input("Montant", min_value=0.0, 
+                                                  value=float(vente_info['mensualite']), format="%.0f")
+                    else:
+                        mois_numero = st.number_input("Mois de paiement anticipé", min_value=1, 
+                                                      max_value=vente_info['duree_mois'], value=1)
+                        montant = st.number_input("Montant", min_value=0.0, 
+                                                  max_value=float(solde_restant), format="%.0f")
+                    
+                    description_paiement = st.text_input("Description du paiement", 
+                                                         placeholder="Mode de paiement, référence...")
+                    
+                    submitted = st.form_submit_button("💳 Enregistrer le paiement")
+                    
+                    if submitted:
+                        if montant > 0:
+                            success, message = enregistrer_paiement(
+                                vente_id, mois_numero, montant, 
+                                "Anticipé" if type_paiement == "Paiement anticipé" else "Normal",
+                                description_paiement
+                            )
+                            if success:
+                                st.success(f"{message} Montant: {montant:,.0f} UM")
+                                st.session_state.form_submitted = True
+                                if 'selected_vente' in st.session_state:
+                                    del st.session_state.selected_vente
+                            else:
+                                st.error(message)
+                        else:
+                            st.error("Le montant doit être supérieur à 0")
+
+if __name__ == "__main__":
+    main()
