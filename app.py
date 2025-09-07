@@ -405,7 +405,12 @@ def main():
                 if 'selected_client' in st.session_state:
                     client_id = st.session_state.selected_client
                     client_info = get_client_by_id(client_id)
-                    st.info(f"Client sélectionné: {client_info[1]} - {client_info[2] or 'No tel'}")
+                    
+                    # Ajout de la vérification pour gérer l'erreur
+                    if client_info:
+                        st.info(f"Client sélectionné: {client_info[1]} - {client_info[2] or 'No tel'}")
+                    else:
+                        st.error("Erreur : Les informations du client n'ont pas été trouvées.")
                 
                 st.subheader("Détails de la Vente")
                 col1, col2, col3 = st.columns(3)
@@ -470,7 +475,9 @@ def main():
             for i, (_, vente) in enumerate(ventes_en_cours.iterrows()):
                 with vente_cols[i % 2]:
                     client_info = get_client_by_id(vente['client_id'])
-                    if st.button(f"Vente #{vente['id']} - {client_info[1]} - {vente['montant_total']:,.0f} UM", 
+                    # Ajout de la vérification pour gérer l'erreur
+                    client_nom_display = client_info[1] if client_info else "Client Inconnu"
+                    if st.button(f"Vente #{vente['id']} - {client_nom_display} - {vente['montant_total']:,.0f} UM", 
                                  key=f"vente_{vente['id']}", use_container_width=True):
                         selected_vente = vente
                         st.session_state.selected_vente = vente['id']
@@ -481,8 +488,12 @@ def main():
                 solde_restant = calculer_solde_restant(vente_id)
                 client_info = get_client_by_id(vente_info['client_id'])
                 
-                st.success(f"Vente sélectionnée: #{vente_id} - {client_info[1]}")
-                
+                # Ajout de la vérification ici pour éviter le KeyError
+                if client_info:
+                    st.success(f"Vente sélectionnée: #{vente_id} - {client_info[1]}")
+                else:
+                    st.error(f"Erreur : Client pour la vente #{vente_id} non trouvé.")
+                    
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Montant total", f"{vente_info['montant_total']:,.0f} UM")
                 col2.metric("Mensualité normale", f"{vente_info['mensualite']:,.0f} UM")
