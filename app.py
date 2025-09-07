@@ -523,6 +523,7 @@ def main():
                         montant = st.number_input("Montant du paiement (UM) *", min_value=0.0, value=float(vente_info['mensualite']), format="%.0f")
                     else: # Paiement anticipé
                         mois_numero = st.number_input("Mois visé (indicatif)", min_value=1, max_value=vente_info['duree_mois'], value=1, format="%d")
+                        # Le montant est pré-rempli avec le solde restant comme demandé
                         montant = st.number_input("Montant du paiement (UM) *", min_value=0.0, max_value=solde_restant, value=solde_restant, format="%.0f")
                     
                     description_paiement = st.text_input("Description du paiement", placeholder="Ex: Virement bancaire, espèce, chèque #123...")
