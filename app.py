@@ -92,12 +92,9 @@ def creer_vente_terme(client_id, valeur_marchandise, taux_benefice_mensuel, dure
     conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
     
-    # Calcul du montant total et de la mensualité
-    # Le taux_benefice_mensuel est appliqué sur la valeur de la marchandise pour calculer le bénéfice par mois
     benefice_total = valeur_marchandise * taux_benefice_mensuel * duree_mois
     montant_total = valeur_marchandise + benefice_total
     
-    # La mensualité inclut une partie du capital et une partie du bénéfice
     mensualite = montant_total / duree_mois
     
     date_vente = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -162,10 +159,6 @@ def enregistrer_paiement(vente_id, mois_numero, montant_paye, type_paiement="Nor
     conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
     
-    # Pour les paiements anticipés, on peut permettre plusieurs paiements pour un même "mois logique"
-    # si le mois_numero est une indication du mois qu'il est censé couvrir.
-    # Pour simplifier, on vérifie ici si un paiement NORMAL existe déjà pour ce mois_numero.
-    # Si c'est un anticipé, on l'autorise toujours.
     if type_paiement == "Normal" and paiement_existe(vente_id, mois_numero):
         conn.close()
         return False, "Un paiement normal pour ce mois existe déjà."
@@ -177,7 +170,6 @@ def enregistrer_paiement(vente_id, mois_numero, montant_paye, type_paiement="Nor
         VALUES (?, ?, ?, ?, ?, ?)
     ''', (vente_id, mois_numero, montant_paye, date_paiement, type_paiement, description_paiement))
     
-    # Vérifier si la vente est complètement payée
     cursor.execute('''
         SELECT SUM(montant_paye) FROM paiements WHERE vente_id = ?
     ''', (vente_id,))
@@ -236,26 +228,22 @@ def get_next_payment_details(vente_id):
     solde_restant = calculer_solde_restant(vente_id)
     
     if paiements.empty:
-        # Premier paiement, 1 mois après la date de vente
         date_debut = datetime.strptime(vente['date_vente'], "%Y-%m-%d %H:%M:%S")
         next_payment_date = date_debut + timedelta(days=30)
         next_payment_amount = vente['mensualite']
     else:
-        # Déterminer le prochain mois logique à payer
         max_mois_paye = paiements['mois_numero'].max()
         next_mois_numero = max_mois_paye + 1
         
         if next_mois_numero > vente['duree_mois']:
             return "Vente entièrement payée", 0.0
         
-        # Basé sur la date du dernier paiement (ou date de vente si aucun paiement)
         last_payment_date_str = paiements['date_paiement'].max()
         date_ref = datetime.strptime(last_payment_date_str, "%Y-%m-%d %H:%M:%S")
         
         next_payment_date = date_ref + timedelta(days=30)
         next_payment_amount = vente['mensualite']
         
-        # Ajuster le montant si le solde restant est inférieur à la mensualité normale
         if next_payment_amount > solde_restant:
             next_payment_amount = solde_restant
 
@@ -271,32 +259,34 @@ def main():
         <style>
         .stButton>button {
             width: 100%;
-            height: 3em; /* Augmente la hauteur des boutons */
+            height: 3em;
             font-size: 1.1em;
             border-radius: 0.5em;
-            border: 1px solid #4CAF50; /* Couleur verte */
+            border: 1px solid #4CAF50;
             color: #4CAF50;
             background-color: white;
+            transition: all 0.3s ease;
         }
         .stButton>button:hover {
             color: white;
             background-color: #4CAF50;
+            transform: translateY(-2px);
         }
         .stExpander {
             border: 1px solid #ddd;
             border-radius: 5px;
             padding: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             background-color: #f9f9f9;
         }
-        .stExpanderHeader {
+        .stExpander > button {
             font-weight: bold;
             color: #333;
         }
         .metric-value {
             font-size: 2.5em !important;
             font-weight: bold !important;
-            color: #007BFF !important; /* Bleu pour les métriques */
+            color: #007BFF !important;
         }
         .metric-label {
             font-size: 1.1em !important;
@@ -311,21 +301,23 @@ def main():
     
     # Menu de navigation stylisé
     st.sidebar.header("Navigation")
-    nav_buttons_container = st.sidebar.container()
-    with nav_buttons_container:
-        if st.button("🏠 Accueil", key="nav_home", use_container_width=True):
-            st.session_state.current_page = "Accueil"
-        if st.button("👥 Clients", key="nav_clients", use_container_width=True):
-            st.session_state.current_page = "Clients"
-        if st.button("🛒 Ventes", key="nav_ventes", use_container_width=True):
-            st.session_state.current_page = "Ventes"
-        if st.button("💳 Paiements", key="nav_paiements", use_container_width=True):
-            st.session_state.current_page = "Paiements"
+    with st.sidebar:
+        st.button("🏠 Accueil", key="nav_home", use_container_width=True)
+        st.button("👥 Clients", key="nav_clients", use_container_width=True)
+        st.button("🛒 Ventes", key="nav_ventes", use_container_width=True)
+        st.button("💳 Paiements", key="nav_paiements", use_container_width=True)
+
+    if st.session_state.get('nav_home', False):
+        st.session_state.current_page = "Accueil"
+    elif st.session_state.get('nav_clients', False):
+        st.session_state.current_page = "Clients"
+    elif st.session_state.get('nav_ventes', False):
+        st.session_state.current_page = "Ventes"
+    elif st.session_state.get('nav_paiements', False):
+        st.session_state.current_page = "Paiements"
     
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Accueil"
-    if 'form_submitted' not in st.session_state:
-        st.session_state.form_submitted = False
     
     # --- PAGE ACCUEIL ---
     if st.session_state.current_page == "Accueil":
@@ -338,46 +330,51 @@ def main():
                 solde_restant = calculer_solde_restant(vente['id'])
                 statut_emoji = "✅" if vente['statut'] == 'Payé' else "⏳"
                 
-                # Récupérer les détails du prochain paiement
                 next_payment_date, next_payment_amount = get_next_payment_details(vente['id'])
 
-                # Titre de l'expander avec le statut, nom du client et montant total
                 expander_title = (
                     f"{statut_emoji} Vente #{vente['id']} - "
-                    f"{vente['client_nom'] if pd.notna(vente['client_nom']) else 'Client Inconnu'} - "
-                    f"{vente['montant_total']:,.0f} UM "
+                    f"{vente['client_nom'] if pd.notna(vente['client_nom']) else 'Client Inconnu'}"
                 )
-                if vente['statut'] != 'Payé' and next_payment_date != "Vente entièrement payée":
-                     expander_title += f" (Proch. paiement: {next_payment_date}, {next_payment_amount:,.0f} UM)"
-
+                
                 with st.expander(expander_title):
                     st.markdown("---")
-                    col_status, col_solde = st.columns(2)
+                    col_status, col_solde, col_next = st.columns(3)
+                    
                     with col_status:
+                        st.markdown(f"**Statut:** `{vente['statut']}`")
                         if vente['statut'] == 'Payé':
                             st.success("🎉 **Vente entièrement payée !**")
                         else:
                             st.warning("⚠️ **Vente en cours.**")
                     with col_solde:
                         st.metric("Solde restant", f"{solde_restant:,.0f} UM", delta_color="off")
+                    with col_next:
+                        if next_payment_date and next_payment_date != "Vente entièrement payée":
+                            st.metric("Prochain paiement", f"{next_payment_amount:,.0f} UM", delta_color="off")
+                            st.markdown(f"**Date:** `{next_payment_date}`")
+                        elif next_payment_date == "Vente entièrement payée":
+                            st.info("Aucun prochain paiement")
+
                     st.markdown("---")
                     
+                    st.subheader("Informations Détaillées")
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        st.markdown(f"**Client:** {vente['client_nom'] if pd.notna(vente['client_nom']) else 'Client Inconnu'}")
-                        st.markdown(f"**Téléphone:** {vente['telephone'] if pd.notna(vente['telephone']) else 'Non renseigné'}")
+                        st.markdown(f"**Client:** `{vente['client_nom'] if pd.notna(vente['client_nom']) else 'Client Inconnu'}`")
+                        st.markdown(f"**Téléphone:** `{vente['telephone'] if pd.notna(vente['telephone']) else 'Non renseigné'}`")
                         st.markdown(f"**Valeur marchandise:** `{vente['valeur_marchandise']:,.0f} UM`")
-                        st.markdown(f"**Taux bénéfice:** `{vente['taux_benefice_mensuel']*100:.0f}%` par mois")
                     
                     with col2:
                         st.markdown(f"**Durée:** `{vente['duree_mois']} mois`")
                         st.markdown(f"**Montant total:** `{vente['montant_total']:,.0f} UM`")
                         st.markdown(f"**Mensualité:** `{vente['mensualite']:,.0f} UM`")
-                        st.markdown(f"**Date vente:** `{vente['date_vente']}`")
-                    
+                        
                     if pd.notna(vente['description_vente']) and vente['description_vente']:
-                        st.markdown(f"**Description:** _{vente['description_vente']}_")
+                        st.markdown(f"**Description de la vente:** _{vente['description_vente']}_")
+                    
+                    st.markdown("---")
                     
                     # Paiements effectués
                     paiements = get_paiements_vente(vente['id'])
@@ -385,9 +382,11 @@ def main():
                         st.subheader("💳 Historique des Paiements")
                         for _, paiement in paiements.iterrows():
                             desc_paiement = f"*{paiement['description_paiement']}*" if pd.notna(paiement['description_paiement']) and paiement['description_paiement'] else ""
-                            st.markdown(f"- **Mois {paiement['mois_numero']}:** `{paiement['montant_paye']:,.0f} UM` ({paiement['type_paiement']}) - `{paiement['date_paiement']}` {desc_paiement}")
+                            st.markdown(f"▪️ **Mois {paiement['mois_numero']}:** `{paiement['montant_paye']:,.0f} UM` ({paiement['type_paiement']}) - `{paiement['date_paiement']}` {desc_paiement}")
+                    else:
+                        st.info("Aucun paiement enregistré pour cette vente.")
                     
-                    # Échéancier théorique
+                    st.markdown("---")
                     st.subheader("📊 Échéancier Théorique")
                     echeancier = generer_echeancier(
                         vente['valeur_marchandise'], 
@@ -418,8 +417,7 @@ def main():
                 if nom:
                     ajouter_client(nom, telephone, description)
                     st.success(f"🎉 Client **{nom}** enregistré avec succès !")
-                    st.session_state.form_submitted = True
-                    st.rerun() # Rafraîchit pour montrer le nouveau client
+                    st.rerun()
                 else:
                     st.error("🚨 Le nom du client est obligatoire pour l'enregistrement.")
         
@@ -506,10 +504,7 @@ def main():
                         echeancier = generer_echeancier(valeur_marchandise, taux_benefice, duree_mois)
                         st.dataframe(echeancier, use_container_width=True)
                         
-                        st.session_state.form_submitted = True
-                        if 'selected_client' in st.session_state: # Clear selection after submission
-                            del st.session_state.selected_client
-                        st.rerun() # Rafraîchit pour montrer la nouvelle vente
+                        st.rerun()
                     else:
                         st.error("🚨 Veuillez vérifier les champs obligatoires (valeur, durée) et les remplir correctement.")
     
@@ -525,7 +520,7 @@ def main():
         else:
             st.subheader("1. Sélectionner la Vente Concernée")
             vente_options = {
-                f"Vente #{v['id']} - {v['client_nom'] or 'Client Inconnu'} - {v['montant_total']:,.0f} UM - Solde: {calculer_solde_restant(v['id']):,.0f} UM": v['id']
+                f"Vente #{v['id']} - {v['client_nom'] or 'Client Inconnu'} - Solde: {calculer_solde_restant(v['id']):,.0f} UM": v['id']
                 for _, v in ventes_en_cours.iterrows()
             }
             selected_vente_display = st.selectbox(
@@ -543,8 +538,8 @@ def main():
                 st.success(f"Vente sélectionnée : **#{vente_id}** - Client: **{client_nom_display}**")
                 
                 col_m1, col_m2, col_m3 = st.columns(3)
-                col_m1.metric("Montant total de la vente", f"{vente_info['montant_total']:,.0f} UM")
-                col_m2.metric("Mensualité normale", f"{vente_info['mensualite']:,.0f} UM")
+                col_m1.metric("Montant total", f"{vente_info['montant_total']:,.0f} UM")
+                col_m2.metric("Mensualité", f"{vente_info['mensualite']:,.0f} UM")
                 col_m3.metric("Solde restant", f"{solde_restant:,.0f} UM", delta_color="off")
                 
                 with st.form("paiement_form", clear_on_submit=True):
@@ -554,15 +549,13 @@ def main():
                     if type_paiement == "Mensualité":
                         mois_numero = st.number_input("Numéro du mois à payer", min_value=1, 
                                                       max_value=vente_info['duree_mois'], value=1, format="%d", key="mois_normal")
-                        montant_suggere = min(float(vente_info['mensualite']), solde_restant)
                         montant = st.number_input("Montant du paiement (UM) *", min_value=0.0, 
-                                                  value=montant_suggere, format="%.0f", key="montant_normal")
+                                                  value=min(float(vente_info['mensualite']), solde_restant), format="%.0f", key="montant_normal")
                     else: # Paiement anticipé
-                        # Un paiement anticipé peut couvrir n'importe quel mois ou partie de mois non encore payé
                         mois_numero = st.number_input("Mois visé par le paiement anticipé (indicatif)", min_value=1, 
                                                       max_value=vente_info['duree_mois'], value=1, format="%d", key="mois_anticipe")
                         montant = st.number_input("Montant du paiement (UM) *", min_value=0.0, 
-                                                  max_value=solde_restant, value=min(solde_restant, 100000.0), format="%.0f", key="montant_anticipe")
+                                                  max_value=solde_restant, value=solde_restant, format="%.0f", key="montant_anticipe")
                     
                     description_paiement = st.text_input("Description du paiement", 
                                                          placeholder="Ex: Virement bancaire, espèce, chèque #123...", key="desc_paiement")
@@ -578,9 +571,7 @@ def main():
                             )
                             if success:
                                 st.success(f"🎉 {message} Montant: **{montant:,.0f} UM**")
-                                st.session_state.form_submitted = True
-                                # Pas besoin de supprimer selected_vente, le selectbox gère
-                                st.rerun() # Rafraîchit pour montrer la mise à jour
+                                st.rerun()
                             else:
                                 st.error(f"⚠️ {message}")
                         else:
