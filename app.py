@@ -123,13 +123,13 @@ def creer_vente_terme(client_id, valeur_marchandise, taux_benefice_mensuel, dure
     
     return vente_id, montant_total, mensualite
 
-# Obtenir toutes les ventes
+# Obtenir toutes les ventes (avec LEFT JOIN pour éviter les erreurs de client manquant)
 def get_all_ventes():
     conn = sqlite3.connect('ventes_terme.db')
     df = pd.read_sql_query('''
         SELECT vt.*, c.nom as client_nom, c.telephone 
         FROM ventes_terme vt 
-        JOIN clients c ON vt.client_id = c.id 
+        LEFT JOIN clients c ON vt.client_id = c.id 
         ORDER BY vt.date_vente DESC
     ''', conn)
     conn.close()
@@ -141,7 +141,7 @@ def get_ventes_client(client_id):
     df = pd.read_sql_query('''
         SELECT vt.*, c.nom as client_nom 
         FROM ventes_terme vt 
-        JOIN clients c ON vt.client_id = c.id 
+        LEFT JOIN clients c ON vt.client_id = c.id 
         WHERE vt.client_id = ?
         ORDER BY vt.date_vente DESC
     ''', conn, params=(client_id,))
@@ -228,18 +228,44 @@ def calculer_solde_restant(vente_id):
 
 # Générer l'échéancier
 def generer_echeancier(valeur_marchandise, taux_benefice, duree_mois):
-    montant_total = valeur_marchandise * (1 + taux_benefice * duree_mois)
-    mensualite_interet = (montant_total - valeur_marchandise) / duree_mois
+    mensualite = (valeur_marchandise * taux_benefice)
+    montant_total = valeur_marchandise + (mensualite * duree_mois)
     
     echeancier = []
+    capital_restant = valeur_marchandise
     for mois in range(1, duree_mois + 1):
-        if mois < duree_mois:
-            montant_mois = mensualite_interet
-        else:
-            montant_mois = valeur_marchandise + mensualite_interet
-        echeancier.append({'Mois': mois, 'Montant à payer': montant_mois})
+        montant_interet = (capital_restant * taux_benefice)
+        mensualite_total = mensualite + montant_interet
+        capital_restant -= mensualite
+        echeancier.append({'Mois': mois, 'Montant à payer': mensualite_total})
     
     return pd.DataFrame(echeancier)
+
+def get_next_payment_details(vente_id):
+    paiements = get_paiements_vente(vente_id)
+    vente = get_all_ventes()[get_all_ventes()['id'] == vente_id].iloc[0]
+    
+    if paiements.empty:
+        # Premier paiement
+        next_payment_date = datetime.strptime(vente['date_vente'], "%Y-%m-%d %H:%M:%S") + timedelta(days=30)
+        next_payment_amount = vente['mensualite']
+        next_mois_numero = 1
+    else:
+        # Paiement suivant
+        last_payment_date_str = paiements['date_paiement'].max()
+        last_payment_date = datetime.strptime(last_payment_date_str, "%Y-%m-%d %H:%M:%S")
+        
+        last_mois_numero = paiements['mois_numero'].max()
+        next_mois_numero = last_mois_numero + 1
+        
+        if next_mois_numero > vente['duree_mois']:
+            return "Vente entièrement payée", None
+        
+        next_payment_date = last_payment_date + timedelta(days=30)
+        next_payment_amount = vente['mensualite']
+        
+    return next_payment_date.strftime("%d/%m/%Y"), next_payment_amount
+
 
 # Interface Streamlit
 def main():
@@ -284,17 +310,22 @@ def main():
                 solde_restant = calculer_solde_restant(vente['id'])
                 statut_color = "🟢" if vente['statut'] == 'Payé' else "🟠"
                 
-                with st.expander(f"{statut_color} Vente #{vente['id']} - {vente['client_nom']} - {vente['montant_total']:,.0f} UM - {vente['statut']}"):
+                # Récupérer les détails du prochain paiement
+                next_payment_date, next_payment_amount = get_next_payment_details(vente['id'])
+
+                with st.expander(f"{statut_color} Vente #{vente['id']} - {vente['client_nom'] or 'Client Inconnu'} - {vente['montant_total']:,.0f} UM - {vente['statut']}"):
                     # Style différent pour les ventes soldées
                     if vente['statut'] == 'Payé':
                         st.success("✅ Vente entièrement payée")
                     else:
                         st.warning(f"⏳ Solde restant: {solde_restant:,.0f} UM")
+                        if next_payment_date:
+                            st.info(f"Prochain paiement : {next_payment_date} de {next_payment_amount:,.0f} UM")
                     
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        st.write(f"**Client:** {vente['client_nom']}")
+                        st.write(f"**Client:** {vente['client_nom'] or 'Client Inconnu'}")
                         st.write(f"**Téléphone:** {vente['telephone'] or 'Non renseigné'}")
                         st.write(f"**Valeur marchandise:** {vente['valeur_marchandise']:,.0f} UM")
                         st.write(f"**Taux bénéfice:** {vente['taux_benefice_mensuel']*100}% par mois")
@@ -306,7 +337,7 @@ def main():
                         st.write(f"**Date vente:** {vente['date_vente']}")
                     
                     # Description de la vente
-                    if 'description_vente' in vente and vente['description_vente']:
+                    if 'description_vente' in vente and pd.notna(vente['description_vente']):
                         st.write(f"**Description:** {vente['description_vente']}")
                     
                     # Paiements effectués
@@ -316,7 +347,7 @@ def main():
                         for _, paiement in paiements.iterrows():
                             st.write(f"- Mois {paiement['mois_numero']}: {paiement['montant_paye']:,.0f} UM "
                                      f"({paiement['type_paiement']}) - {paiement['date_paiement']}")
-                            if 'description_paiement' in paiement and paiement['description_paiement']:
+                            if 'description_paiement' in paiement and pd.notna(paiement['description_paiement']):
                                 st.caption(f"  *{paiement['description_paiement']}*")
                     
                     # Échéancier théorique
@@ -420,8 +451,9 @@ def main():
                                                          min_value=0.0, format="%.0f", value=1000000.0)
                 
                 with col2:
-                    taux_benefice = st.number_input("Taux bénéfice mensuel (%) *", 
-                                                    min_value=0.0, max_value=100.0, value=8.0, step=0.5) / 100
+                    taux_benefice_entier = st.number_input("Taux bénéfice mensuel (%) *", 
+                                                    min_value=0, max_value=100, value=8, step=1)
+                    taux_benefice = taux_benefice_entier / 100
                 
                 with col3:
                     duree_mois = st.number_input("Durée (mois) *", min_value=1, value=6)
@@ -474,9 +506,7 @@ def main():
             
             for i, (_, vente) in enumerate(ventes_en_cours.iterrows()):
                 with vente_cols[i % 2]:
-                    client_info = get_client_by_id(vente['client_id'])
-                    # Ajout de la vérification pour gérer l'erreur
-                    client_nom_display = client_info[1] if client_info else "Client Inconnu"
+                    client_nom_display = vente['client_nom'] or "Client Inconnu"
                     if st.button(f"Vente #{vente['id']} - {client_nom_display} - {vente['montant_total']:,.0f} UM", 
                                  key=f"vente_{vente['id']}", use_container_width=True):
                         selected_vente = vente
@@ -486,14 +516,10 @@ def main():
                 vente_id = st.session_state.selected_vente
                 vente_info = ventes[ventes['id'] == vente_id].iloc[0]
                 solde_restant = calculer_solde_restant(vente_id)
-                client_info = get_client_by_id(vente_info['client_id'])
                 
-                # Ajout de la vérification ici pour éviter le KeyError
-                if client_info:
-                    st.success(f"Vente sélectionnée: #{vente_id} - {client_info[1]}")
-                else:
-                    st.error(f"Erreur : Client pour la vente #{vente_id} non trouvé.")
-                    
+                client_nom_display = vente_info['client_nom'] or "Client Inconnu"
+                st.success(f"Vente sélectionnée: #{vente_id} - {client_nom_display}")
+                
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Montant total", f"{vente_info['montant_total']:,.0f} UM")
                 col2.metric("Mensualité normale", f"{vente_info['mensualite']:,.0f} UM")
