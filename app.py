@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 # --- Configuration de la base de données ---
 def init_db():
-    conn = sqlite3.connect('ventes_terme.db')
+    conn = sqlite3.connect('ventes_terme1.db')
     cursor = conn.cursor()
     
     cursor.execute('''
