@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 # --- Configuration de la base de données ---
 def init_db():
-    conn = sqlite3.connect('ventes_terme1.db')
+    conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -242,6 +242,35 @@ def get_next_payment_details(vente_id):
 
     return next_payment_date.strftime("%d/%m/%Y"), next_payment_amount
 
+def delete_client_by_id(client_id):
+    conn = sqlite3.connect('ventes_terme.db')
+    cursor = conn.cursor()
+    
+    # Suppression en cascade des paiements et des ventes associées au client
+    cursor.execute("SELECT id FROM ventes_terme WHERE client_id = ?", (client_id,))
+    vente_ids = [row[0] for row in cursor.fetchall()]
+    
+    for vente_id in vente_ids:
+        cursor.execute("DELETE FROM paiements WHERE vente_id = ?", (vente_id,))
+    
+    cursor.execute("DELETE FROM ventes_terme WHERE client_id = ?", (client_id,))
+    
+    # Suppression du client
+    cursor.execute("DELETE FROM clients WHERE id = ?", (client_id,))
+    
+    conn.commit()
+    conn.close()
+    return True
+
+def delete_paiement_by_id(paiement_id):
+    conn = sqlite3.connect('ventes_terme.db')
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM paiements WHERE id = ?", (paiement_id,))
+    conn.commit()
+    conn.close()
+    return True
+
+
 # --- Interface Streamlit ---
 
 def main():
@@ -417,6 +446,32 @@ def main():
                             )
                     else:
                         st.info(f"Ce client n'a pas encore de ventes enregistrées.")
+
+                    st.markdown("---")
+                    col_del1, col_del2 = st.columns([1, 4])
+                    with col_del1:
+                        if st.button("❌ Supprimer le client", key=f"del_client_{client['id']}", use_container_width=True):
+                            st.session_state.client_to_delete = client['id']
+                            st.rerun()
+
+                    if 'client_to_delete' in st.session_state and st.session_state.client_to_delete == client['id']:
+                        with st.container():
+                            st.warning(f"⚠️ Êtes-vous sûr de vouloir supprimer le client **{client['nom']}** ? Cela supprimera également toutes ses ventes et ses paiements.")
+                            col_confirm_del_client, col_cancel_del_client = st.columns(2)
+                            with col_confirm_del_client:
+                                if st.button("Confirmer la suppression", key=f"confirm_del_client_{client['id']}", use_container_width=True):
+                                    if delete_client_by_id(client['id']):
+                                        st.success(f"🎉 Le client **{client['nom']}** et toutes ses données associées ont été supprimés.")
+                                    else:
+                                        st.error("🚨 Échec de la suppression.")
+                                    del st.session_state.client_to_delete
+                                    st.rerun()
+                            with col_cancel_del_client:
+                                if st.button("Annuler", key=f"cancel_del_client_{client['id']}", use_container_width=True):
+                                    del st.session_state.client_to_delete
+                                    st.info("Suppression annulée.")
+                                    st.rerun()
+
         else:
             st.info("ℹ️ Aucun client enregistré. Utilisez le formulaire ci-dessus pour en ajouter un.")
     
@@ -512,6 +567,40 @@ def main():
                 col_m1.metric("Montant total", f"{vente_info['montant_total']:,.0f} UM")
                 col_m2.metric("Mensualité normale", f"{vente_info['mensualite']:,.0f} UM")
                 col_m3.metric("Solde restant", f"{solde_restant:,.0f} UM", delta_color="off")
+                
+                # Historique des paiements avec bouton de suppression
+                st.subheader("Historique des paiements")
+                paiements = get_paiements_vente(vente_id)
+                if not paiements.empty:
+                    for _, paiement in paiements.iterrows():
+                        col_p1, col_p2 = st.columns([4, 1])
+                        with col_p1:
+                            desc_paiement = f"*{paiement['description_paiement']}*" if pd.notna(paiement['description_paiement']) and paiement['description_paiement'] else ""
+                            st.markdown(f"**Mois {paiement['mois_numero']}:** `{paiement['montant_paye']:,.0f} UM` ({paiement['type_paiement']}) - `{paiement['date_paiement']}` {desc_paiement}")
+                        with col_p2:
+                            if st.button("❌", key=f"del_paiement_{paiement['id']}", help="Supprimer ce paiement"):
+                                st.session_state.paiement_to_delete = paiement['id']
+                                st.rerun()
+
+                    if 'paiement_to_delete' in st.session_state and st.session_state.paiement_to_delete in paiements['id'].values:
+                        with st.container():
+                            st.warning("⚠️ Êtes-vous sûr de vouloir supprimer ce paiement ?")
+                            col_confirm_del, col_cancel_del = st.columns(2)
+                            with col_confirm_del:
+                                if st.button("Confirmer la suppression", key="confirm_del_paiement", use_container_width=True):
+                                    if delete_paiement_by_id(st.session_state.paiement_to_delete):
+                                        st.success("🎉 Le paiement a été supprimé.")
+                                    else:
+                                        st.error("🚨 Échec de la suppression.")
+                                    del st.session_state.paiement_to_delete
+                                    st.rerun()
+                            with col_cancel_del:
+                                if st.button("Annuler", key="cancel_del_paiement", use_container_width=True):
+                                    st.info("Suppression annulée.")
+                                    del st.session_state.paiement_to_delete
+                                    st.rerun()
+                else:
+                    st.info("Aucun paiement enregistré pour cette vente.")
                 
                 # Formulaire de paiement initial
                 with st.form("paiement_form", clear_on_submit=True):
