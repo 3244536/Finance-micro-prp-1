@@ -2,7 +2,6 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
 
 # --- Configuration de la base de données ---
 def init_db():
@@ -232,12 +231,6 @@ def get_next_payment_details(vente_id):
         next_payment_date = date_debut + timedelta(days=30)
         next_payment_amount = vente['mensualite']
     else:
-        max_mois_paye = paiements['mois_numero'].max()
-        next_mois_numero = max_mois_paye + 1
-        
-        if next_mois_numero > vente['duree_mois']:
-            return "Vente entièrement payée", 0.0
-        
         last_payment_date_str = paiements['date_paiement'].max()
         date_ref = datetime.strptime(last_payment_date_str, "%Y-%m-%d %H:%M:%S")
         
@@ -265,31 +258,33 @@ def main():
             border: 1px solid #4CAF50;
             color: #4CAF50;
             background-color: white;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
         }
         .stButton>button:hover {
             color: white;
             background-color: #4CAF50;
-            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .stExpander {
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
             padding: 10px;
             margin-bottom: 15px;
-            background-color: #f9f9f9;
+            background-color: #fafafa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .stExpander > button {
+        .stExpanderHeader {
             font-weight: bold;
             color: #333;
+            font-size: 1.2em;
         }
         .metric-value {
-            font-size: 2.5em !important;
+            font-size: 2em !important;
             font-weight: bold !important;
             color: #007BFF !important;
         }
         .metric-label {
-            font-size: 1.1em !important;
+            font-size: 1em !important;
             color: #555 !important;
         }
         </style>
@@ -301,23 +296,19 @@ def main():
     
     # Menu de navigation stylisé
     st.sidebar.header("Navigation")
-    with st.sidebar:
-        st.button("🏠 Accueil", key="nav_home", use_container_width=True)
-        st.button("👥 Clients", key="nav_clients", use_container_width=True)
-        st.button("🛒 Ventes", key="nav_ventes", use_container_width=True)
-        st.button("💳 Paiements", key="nav_paiements", use_container_width=True)
-
-    if st.session_state.get('nav_home', False):
+    if st.sidebar.button("🏠 Accueil", key="nav_home", use_container_width=True):
         st.session_state.current_page = "Accueil"
-    elif st.session_state.get('nav_clients', False):
+    if st.sidebar.button("👥 Clients", key="nav_clients", use_container_width=True):
         st.session_state.current_page = "Clients"
-    elif st.session_state.get('nav_ventes', False):
+    if st.sidebar.button("🛒 Ventes", key="nav_ventes", use_container_width=True):
         st.session_state.current_page = "Ventes"
-    elif st.session_state.get('nav_paiements', False):
+    if st.sidebar.button("💳 Paiements", key="nav_paiements", use_container_width=True):
         st.session_state.current_page = "Paiements"
     
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Accueil"
+    if 'payment_to_confirm' in st.session_state:
+        del st.session_state.payment_to_confirm
     
     # --- PAGE ACCUEIL ---
     if st.session_state.current_page == "Accueil":
@@ -336,57 +327,43 @@ def main():
                     f"{statut_emoji} Vente #{vente['id']} - "
                     f"{vente['client_nom'] if pd.notna(vente['client_nom']) else 'Client Inconnu'}"
                 )
-                
+                if vente['statut'] != 'Payé' and next_payment_date != "Vente entièrement payée":
+                     expander_title += f" (Proch. paiement: `{next_payment_date}`, `{next_payment_amount:,.0f} UM`)"
+
                 with st.expander(expander_title):
                     st.markdown("---")
-                    col_status, col_solde, col_next = st.columns(3)
-                    
+                    col_status, col_montant, col_mensualite, col_solde = st.columns(4)
                     with col_status:
-                        st.markdown(f"**Statut:** `{vente['statut']}`")
-                        if vente['statut'] == 'Payé':
-                            st.success("🎉 **Vente entièrement payée !**")
-                        else:
-                            st.warning("⚠️ **Vente en cours.**")
-                    with col_solde:
-                        st.metric("Solde restant", f"{solde_restant:,.0f} UM", delta_color="off")
-                    with col_next:
-                        if next_payment_date and next_payment_date != "Vente entièrement payée":
-                            st.metric("Prochain paiement", f"{next_payment_amount:,.0f} UM", delta_color="off")
-                            st.markdown(f"**Date:** `{next_payment_date}`")
-                        elif next_payment_date == "Vente entièrement payée":
-                            st.info("Aucun prochain paiement")
-
+                        st.info(f"Statut: **{vente['statut']}**")
+                    col_montant.metric("Montant total", f"{vente['montant_total']:,.0f} UM")
+                    col_mensualite.metric("Mensualité", f"{vente['mensualite']:,.0f} UM")
+                    col_solde.metric("Solde restant", f"{solde_restant:,.0f} UM")
                     st.markdown("---")
                     
                     st.subheader("Informations Détaillées")
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        st.markdown(f"**Client:** `{vente['client_nom'] if pd.notna(vente['client_nom']) else 'Client Inconnu'}`")
-                        st.markdown(f"**Téléphone:** `{vente['telephone'] if pd.notna(vente['telephone']) else 'Non renseigné'}`")
+                        st.markdown(f"**Client:** {vente['client_nom'] if pd.notna(vente['client_nom']) else 'Client Inconnu'}")
+                        st.markdown(f"**Téléphone:** {vente['telephone'] if pd.notna(vente['telephone']) else 'Non renseigné'}")
                         st.markdown(f"**Valeur marchandise:** `{vente['valeur_marchandise']:,.0f} UM`")
+                        st.markdown(f"**Taux bénéfice:** `{vente['taux_benefice_mensuel']*100:.0f}%` par mois")
                     
                     with col2:
                         st.markdown(f"**Durée:** `{vente['duree_mois']} mois`")
-                        st.markdown(f"**Montant total:** `{vente['montant_total']:,.0f} UM`")
-                        st.markdown(f"**Mensualité:** `{vente['mensualite']:,.0f} UM`")
-                        
-                    if pd.notna(vente['description_vente']) and vente['description_vente']:
-                        st.markdown(f"**Description de la vente:** _{vente['description_vente']}_")
+                        st.markdown(f"**Date vente:** `{vente['date_vente']}`")
+                        if pd.notna(vente['description_vente']) and vente['description_vente']:
+                            st.markdown(f"**Description:** _{vente['description_vente']}_")
                     
-                    st.markdown("---")
-                    
-                    # Paiements effectués
+                    st.subheader("💳 Historique des Paiements")
                     paiements = get_paiements_vente(vente['id'])
                     if not paiements.empty:
-                        st.subheader("💳 Historique des Paiements")
                         for _, paiement in paiements.iterrows():
                             desc_paiement = f"*{paiement['description_paiement']}*" if pd.notna(paiement['description_paiement']) and paiement['description_paiement'] else ""
-                            st.markdown(f"▪️ **Mois {paiement['mois_numero']}:** `{paiement['montant_paye']:,.0f} UM` ({paiement['type_paiement']}) - `{paiement['date_paiement']}` {desc_paiement}")
+                            st.markdown(f"- **Mois {paiement['mois_numero']}:** `{paiement['montant_paye']:,.0f} UM` ({paiement['type_paiement']}) - `{paiement['date_paiement']}` {desc_paiement}")
                     else:
                         st.info("Aucun paiement enregistré pour cette vente.")
                     
-                    st.markdown("---")
                     st.subheader("📊 Échéancier Théorique")
                     echeancier = generer_echeancier(
                         vente['valeur_marchandise'], 
@@ -403,13 +380,12 @@ def main():
         
         with st.form("nouveau_client_form", clear_on_submit=True):
             st.subheader("✨ Ajouter un Nouveau Client")
-            
             col1, col2 = st.columns(2)
             with col1:
-                nom = st.text_input("Nom complet *", placeholder="Ex: Jean Dupont", key="client_nom_input")
-                telephone = st.text_input("Téléphone", placeholder="Ex: +222 45 12 34 56", key="client_tel_input")
+                nom = st.text_input("Nom complet *", placeholder="Ex: Jean Dupont")
+                telephone = st.text_input("Téléphone", placeholder="Ex: +222 45 12 34 56")
             with col2:
-                description = st.text_area("Description / Notes", placeholder="Informations supplémentaires sur le client...", height=100, key="client_desc_input")
+                description = st.text_area("Description / Notes", placeholder="Informations supplémentaires sur le client...", height=100)
             
             submitted = st.form_submit_button("✅ Enregistrer le Client")
             
@@ -417,7 +393,6 @@ def main():
                 if nom:
                     ajouter_client(nom, telephone, description)
                     st.success(f"🎉 Client **{nom}** enregistré avec succès !")
-                    st.rerun()
                 else:
                     st.error("🚨 Le nom du client est obligatoire pour l'enregistrement.")
         
@@ -459,8 +434,7 @@ def main():
                 client_options = {f"{c['nom']} ({c['telephone'] or 'Non renseigné'})": c['id'] for _, c in clients.iterrows()}
                 selected_client_display = st.selectbox(
                     "Choisir un client", 
-                    options=list(client_options.keys()), 
-                    key="select_client_for_sale"
+                    options=list(client_options.keys())
                 )
                 client_id = client_options[selected_client_display] if selected_client_display else None
                 
@@ -472,17 +446,14 @@ def main():
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    valeur_marchandise = st.number_input("Valeur marchandise (UM) *", 
-                                                         min_value=0.0, format="%.0f", value=1000000.0)
+                    valeur_marchandise = st.number_input("Valeur marchandise (UM) *", min_value=0.0, format="%.0f", value=1000000.0)
                 with col2:
-                    taux_benefice_entier = st.number_input("Taux bénéfice mensuel (%) *", 
-                                                    min_value=0, max_value=100, value=8, step=1, format="%d")
+                    taux_benefice_entier = st.number_input("Taux bénéfice mensuel (%) *", min_value=0, max_value=100, value=8, step=1, format="%d")
                     taux_benefice = taux_benefice_entier / 100
                 with col3:
                     duree_mois = st.number_input("Durée (mois) *", min_value=1, value=6, format="%d")
                 
-                description_vente = st.text_area("Description de la marchandise ou du service", 
-                                                 placeholder="Ex: 1 TV Samsung 55 pouces, un service de consultation...", height=100)
+                description_vente = st.text_area("Description de la marchandise ou du service", placeholder="Ex: 1 TV Samsung 55 pouces, un service de consultation...", height=100)
                 
                 submitted = st.form_submit_button("🚀 Créer la Vente")
                 
@@ -504,6 +475,7 @@ def main():
                         echeancier = generer_echeancier(valeur_marchandise, taux_benefice, duree_mois)
                         st.dataframe(echeancier, use_container_width=True)
                         
+                        st.session_state.current_page = "Accueil"
                         st.rerun()
                     else:
                         st.error("🚨 Veuillez vérifier les champs obligatoires (valeur, durée) et les remplir correctement.")
@@ -525,8 +497,7 @@ def main():
             }
             selected_vente_display = st.selectbox(
                 "Choisir une vente à payer",
-                options=list(vente_options.keys()),
-                key="select_sale_for_payment"
+                options=list(vente_options.keys())
             )
             vente_id = vente_options[selected_vente_display] if selected_vente_display else None
             
@@ -539,43 +510,70 @@ def main():
                 
                 col_m1, col_m2, col_m3 = st.columns(3)
                 col_m1.metric("Montant total", f"{vente_info['montant_total']:,.0f} UM")
-                col_m2.metric("Mensualité", f"{vente_info['mensualite']:,.0f} UM")
+                col_m2.metric("Mensualité normale", f"{vente_info['mensualite']:,.0f} UM")
                 col_m3.metric("Solde restant", f"{solde_restant:,.0f} UM", delta_color="off")
                 
+                # Formulaire de paiement initial
                 with st.form("paiement_form", clear_on_submit=True):
-                    st.subheader("2. Détails du Paiement")
-                    type_paiement = st.radio("Type de paiement", ["Mensualité", "Paiement anticipé"], key="type_paiement_radio")
+                    st.subheader("2. Saisir les Détails du Paiement")
+                    type_paiement = st.radio("Type de paiement", ["Mensualité", "Paiement anticipé"])
                     
                     if type_paiement == "Mensualité":
-                        mois_numero = st.number_input("Numéro du mois à payer", min_value=1, 
-                                                      max_value=vente_info['duree_mois'], value=1, format="%d", key="mois_normal")
-                        montant = st.number_input("Montant du paiement (UM) *", min_value=0.0, 
-                                                  value=min(float(vente_info['mensualite']), solde_restant), format="%.0f", key="montant_normal")
+                        mois_numero = st.number_input("Numéro du mois à payer", min_value=1, max_value=vente_info['duree_mois'], value=1, format="%d")
+                        montant = st.number_input("Montant du paiement (UM) *", min_value=0.0, value=float(vente_info['mensualite']), format="%.0f")
                     else: # Paiement anticipé
-                        mois_numero = st.number_input("Mois visé par le paiement anticipé (indicatif)", min_value=1, 
-                                                      max_value=vente_info['duree_mois'], value=1, format="%d", key="mois_anticipe")
-                        montant = st.number_input("Montant du paiement (UM) *", min_value=0.0, 
-                                                  max_value=solde_restant, value=solde_restant, format="%.0f", key="montant_anticipe")
+                        mois_numero = st.number_input("Mois visé (indicatif)", min_value=1, max_value=vente_info['duree_mois'], value=1, format="%d")
+                        montant = st.number_input("Montant du paiement (UM) *", min_value=0.0, max_value=solde_restant, value=solde_restant, format="%.0f")
                     
-                    description_paiement = st.text_input("Description du paiement", 
-                                                         placeholder="Ex: Virement bancaire, espèce, chèque #123...", key="desc_paiement")
+                    description_paiement = st.text_input("Description du paiement", placeholder="Ex: Virement bancaire, espèce, chèque #123...")
                     
                     submitted = st.form_submit_button("✅ Enregistrer le Paiement")
                     
                     if submitted:
                         if montant > 0:
-                            success, message = enregistrer_paiement(
-                                vente_id, mois_numero, montant, 
-                                "Anticipé" if type_paiement == "Paiement anticipé" else "Normal",
-                                description_paiement
-                            )
-                            if success:
-                                st.success(f"🎉 {message} Montant: **{montant:,.0f} UM**")
-                                st.rerun()
-                            else:
-                                st.error(f"⚠️ {message}")
+                            st.session_state.payment_to_confirm = {
+                                'vente_id': vente_id,
+                                'mois_numero': mois_numero,
+                                'montant_paye': montant,
+                                'type_paiement': "Anticipé" if type_paiement == "Paiement anticipé" else "Normal",
+                                'description_paiement': description_paiement
+                            }
+                            st.rerun()
                         else:
                             st.error("🚨 Le montant du paiement doit être supérieur à 0.")
+
+        # Étape de confirmation
+        if 'payment_to_confirm' in st.session_state:
+            payment_info = st.session_state.payment_to_confirm
+            with st.container():
+                st.warning("Veuillez confirmer les détails du paiement ci-dessous.")
+                st.write(f"**Vente ID:** #{payment_info['vente_id']}")
+                st.write(f"**Montant:** `{payment_info['montant_paye']:,.0f} UM`")
+                st.write(f"**Type:** `{payment_info['type_paiement']}`")
+                st.write(f"**Mois visé:** `{payment_info['mois_numero']}`")
+                st.write(f"**Description:** _{payment_info['description_paiement'] or 'Aucune'}_")
+                
+                col_confirm1, col_confirm2 = st.columns(2)
+                with col_confirm1:
+                    if st.button("Confirmer et Valider", key="confirm_btn", use_container_width=True):
+                        success, message = enregistrer_paiement(
+                            payment_info['vente_id'],
+                            payment_info['mois_numero'],
+                            payment_info['montant_paye'],
+                            payment_info['type_paiement'],
+                            payment_info['description_paiement']
+                        )
+                        if success:
+                            st.success(f"🎉 {message}")
+                        else:
+                            st.error(f"⚠️ {message}")
+                        del st.session_state.payment_to_confirm
+                        st.rerun()
+                with col_confirm2:
+                    if st.button("Annuler", key="cancel_btn", use_container_width=True):
+                        st.info("Paiement annulé.")
+                        del st.session_state.payment_to_confirm
+                        st.rerun()
 
 if __name__ == "__main__":
     main()
