@@ -157,9 +157,6 @@ def enregistrer_paiement(operation_id, type_paiement, montant):
     cursor = conn.cursor()
     date_paiement = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    cursor.execute('SELECT client_id FROM operations WHERE id = ?', (operation_id,))
-    client_id = cursor.fetchone()[0]
-    
     cursor.execute('''
         INSERT INTO paiements (operation_id, type_paiement, montant, date_paiement)
         VALUES (?, ?, ?, ?)
