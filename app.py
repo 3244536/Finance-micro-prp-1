@@ -61,7 +61,7 @@ def init_db():
 def format_number(number):
     return f"{number:,.0f}".replace(",", " ")
 
-# Ajouter un client
+# Ajouter un client - CORRIGÉ
 def ajouter_client(nom, telephone, description):
     conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
@@ -75,11 +75,15 @@ def ajouter_client(nom, telephone, description):
         ''', (nom, telephone, description, date_creation))
         
         conn.commit()
-        conn.close()
-        return True, "Client ajouté avec succès!"
+        success = True
+        message = "Client ajouté avec succès!"
     except sqlite3.IntegrityError:
+        success = False
+        message = "Ce client existe déjà!"
+    finally:
         conn.close()
-        return False, "Ce client existe déjà!"
+    
+    return success, message
 
 # Modifier un client
 def modifier_client(client_id, nom, telephone, description):
@@ -94,27 +98,38 @@ def modifier_client(client_id, nom, telephone, description):
         ''', (nom, telephone, description, client_id))
         
         conn.commit()
-        conn.close()
-        return True, "Client modifié avec succès!"
+        success = True
+        message = "Client modifié avec succès!"
     except sqlite3.IntegrityError:
+        success = False
+        message = "Ce nom existe déjà!"
+    finally:
         conn.close()
-        return False, "Ce nom existe déjà!"
+    
+    return success, message
 
 # Supprimer un client
 def supprimer_client(client_id):
     conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
     
-    # Vérifier si le client a des opérations
-    cursor.execute('SELECT COUNT(*) FROM operations WHERE client_id = ?', (client_id,))
-    if cursor.fetchone()[0] > 0:
+    try:
+        # Vérifier si le client a des opérations
+        cursor.execute('SELECT COUNT(*) FROM operations WHERE client_id = ?', (client_id,))
+        if cursor.fetchone()[0] > 0:
+            return False, "Impossible de supprimer: le client a des opérations en cours!"
+        
+        cursor.execute('DELETE FROM clients WHERE id = ?', (client_id,))
+        conn.commit()
+        success = True
+        message = "Client supprimé avec succès!"
+    except Exception as e:
+        success = False
+        message = f"Erreur lors de la suppression: {str(e)}"
+    finally:
         conn.close()
-        return False, "Impossible de supprimer: le client a des opérations en cours!"
     
-    cursor.execute('DELETE FROM clients WHERE id = ?', (client_id,))
-    conn.commit()
-    conn.close()
-    return True, "Client supprimé avec succès!"
+    return success, message
 
 # Obtenir tous les clients
 def get_clients():
@@ -184,15 +199,23 @@ def supprimer_operation(operation_id):
     conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
     
-    # Supprimer d'abord les paiements associés
-    cursor.execute('DELETE FROM paiements WHERE operation_id = ?', (operation_id,))
+    try:
+        # Supprimer d'abord les paiements associés
+        cursor.execute('DELETE FROM paiements WHERE operation_id = ?', (operation_id,))
+        
+        # Puis supprimer l'opération
+        cursor.execute('DELETE FROM operations WHERE id = ?', (operation_id,))
+        
+        conn.commit()
+        success = True
+        message = "Opération supprimée avec succès!"
+    except Exception as e:
+        success = False
+        message = f"Erreur lors de la suppression: {str(e)}"
+    finally:
+        conn.close()
     
-    # Puis supprimer l'opération
-    cursor.execute('DELETE FROM operations WHERE id = ?', (operation_id,))
-    
-    conn.commit()
-    conn.close()
-    return True, "Opération supprimée avec succès!"
+    return success, message
 
 # Enregistrer un paiement
 def enregistrer_paiement(operation_id, client_id, type_paiement, montant, description=""):
@@ -201,31 +224,42 @@ def enregistrer_paiement(operation_id, client_id, type_paiement, montant, descri
     
     date_paiement = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    cursor.execute('''
-        INSERT INTO paiements (operation_id, client_id, type_paiement, montant, date_paiement, description)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (operation_id, client_id, type_paiement, montant, date_paiement, description))
+    try:
+        cursor.execute('''
+            INSERT INTO paiements (operation_id, client_id, type_paiement, montant, date_paiement, description)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (operation_id, client_id, type_paiement, montant, date_paiement, description))
+        
+        # Mettre à jour la prochaine échéance si c'est un paiement ordinaire
+        if type_paiement == "Ordinaire":
+            cursor.execute('SELECT prochaine_echeance FROM operations WHERE id = ?', (operation_id,))
+            result = cursor.fetchone()
+            if result and result[0]:
+                current_date = datetime.strptime(result[0], "%Y-%m-%d")
+                new_date = (current_date + timedelta(days=30)).strftime("%Y-%m-%d")
+                cursor.execute('UPDATE operations SET prochaine_echeance = ? WHERE id = ?', (new_date, operation_id))
+        
+        # Vérifier si l'opération est terminée
+        cursor.execute('SELECT SUM(montant) FROM paiements WHERE operation_id = ?', (operation_id,))
+        total_paye = cursor.fetchone()[0] or 0
+        
+        cursor.execute('SELECT montant_total FROM operations WHERE id = ?', (operation_id,))
+        result = cursor.fetchone()
+        montant_total = result[0] if result else 0
+        
+        if total_paye >= montant_total:
+            cursor.execute('UPDATE operations SET statut = "Terminé" WHERE id = ?', (operation_id,))
+        
+        conn.commit()
+        success = True
+        message = "Paiement enregistré avec succès!"
+    except Exception as e:
+        success = False
+        message = f"Erreur lors de l'enregistrement: {str(e)}"
+    finally:
+        conn.close()
     
-    # Mettre à jour la prochaine échéance si c'est un paiement ordinaire
-    if type_paiement == "Ordinaire":
-        cursor.execute('SELECT prochaine_echeance FROM operations WHERE id = ?', (operation_id,))
-        current_date = datetime.strptime(cursor.fetchone()[0], "%Y-%m-%d")
-        new_date = (current_date + timedelta(days=30)).strftime("%Y-%m-%d")
-        cursor.execute('UPDATE operations SET prochaine_echeance = ? WHERE id = ?', (new_date, operation_id))
-    
-    # Vérifier si l'opération est terminée
-    cursor.execute('SELECT SUM(montant) FROM paiements WHERE operation_id = ?', (operation_id,))
-    total_paye = cursor.fetchone()[0] or 0
-    
-    cursor.execute('SELECT montant_total FROM operations WHERE id = ?', (operation_id,))
-    montant_total = cursor.fetchone()[0]
-    
-    if total_paye >= montant_total:
-        cursor.execute('UPDATE operations SET statut = "Terminé" WHERE id = ?', (operation_id,))
-    
-    conn.commit()
-    conn.close()
-    return True, "Paiement enregistré avec succès!"
+    return success, message
 
 # Obtenir les paiements d'une opération
 def get_paiements_operation(operation_id):
@@ -245,14 +279,10 @@ def get_total_paiements(operation_id):
     conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
     cursor.execute('SELECT SUM(montant) FROM paiements WHERE operation_id = ?', (operation_id,))
-    total = cursor.fetchone()[0] or 0
+    result = cursor.fetchone()
+    total = result[0] if result and result[0] else 0
     conn.close()
     return total
-
-# Fonction pour charger une image en base64
-def get_image_base64(path):
-    with open(path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode()
 
 # Interface Streamlit
 def main():
@@ -320,10 +350,11 @@ def main():
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
+            total_montant = operations['montant_total'].sum() if not operations.empty else 0
             st.markdown(f"""
             <div class='metric-card'>
                 <h3>💰 TOTAL</h3>
-                <h2>{format_number(operations['montant_total'].sum())}</h2>
+                <h2>{format_number(total_montant)}</h2>
             </div>
             """, unsafe_allow_html=True)
         
@@ -336,7 +367,7 @@ def main():
             """, unsafe_allow_html=True)
         
         with col3:
-            operations_terminees = operations[operations['statut'] == 'Terminé']
+            operations_terminees = operations[operations['statut'] == 'Terminé'] if not operations.empty else pd.DataFrame()
             st.markdown(f"""
             <div class='metric-card'>
                 <h3>✅ TERMINÉES</h3>
@@ -345,10 +376,11 @@ def main():
             """, unsafe_allow_html=True)
         
         with col4:
+            clients_count = len(get_clients())
             st.markdown(f"""
             <div class='metric-card'>
                 <h3>👥 CLIENTS</h3>
-                <h2>{len(get_clients())}</h2>
+                <h2>{clients_count}</h2>
             </div>
             """, unsafe_allow_html=True)
     
