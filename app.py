@@ -7,15 +7,49 @@ import base64
 # --- Fonctions de la Base de Données ---
 
 def init_db():
-    """Initialise la base de données et crée les tables si elles n'existent pas."""
+    """
+    Initialise la base de données et gère la migration de schéma.
+    """
     conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
 
-    # Table des clients
+    # Vérifier si la colonne 'nom' a une contrainte UNIQUE
+    try:
+        cursor.execute("PRAGMA table_info(clients);")
+        columns_info = cursor.fetchall()
+        is_unique = any(col[5] == 1 and col[1] == 'nom' for col in columns_info)
+
+        if is_unique:
+            st.info("Migration de la base de données en cours : Suppression de la contrainte UNIQUE sur le nom du client.")
+            # Étape 1: Renommer l'ancienne table
+            cursor.execute("ALTER TABLE clients RENAME TO clients_old;")
+            
+            # Étape 2: Créer la nouvelle table sans la contrainte UNIQUE sur 'nom'
+            cursor.execute('''
+                CREATE TABLE clients (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nom TEXT NOT NULL,
+                    telephone TEXT,
+                    description TEXT
+                )
+            ''')
+
+            # Étape 3: Copier les données de l'ancienne table vers la nouvelle
+            cursor.execute("INSERT INTO clients (id, nom, telephone, description) SELECT id, nom, telephone, description FROM clients_old;")
+
+            # Étape 4: Supprimer l'ancienne table
+            cursor.execute("DROP TABLE clients_old;")
+            
+            st.success("Migration de la base de données terminée!")
+    except sqlite3.OperationalError:
+        # La table 'clients' n'existe pas encore, on la crée
+        pass
+
+    # Table des clients (création si elle n'existe pas)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS clients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nom TEXT NOT NULL UNIQUE,
+            nom TEXT NOT NULL,
             telephone TEXT,
             description TEXT
         )
@@ -61,8 +95,8 @@ def ajouter_client(nom, telephone, description):
         cursor.execute('INSERT INTO clients (nom, telephone, description) VALUES (?, ?, ?)', (nom, telephone, description))
         conn.commit()
         return True, "Client ajouté avec succès!"
-    except sqlite3.IntegrityError:
-        return False, "Ce client existe déjà!"
+    except Exception as e:
+        return False, f"Erreur lors de l'ajout du client: {e}"
     finally:
         conn.close()
 
@@ -73,8 +107,8 @@ def modifier_client(client_id, nom, telephone, description):
         cursor.execute('UPDATE clients SET nom = ?, telephone = ?, description = ? WHERE id = ?', (nom, telephone, description, client_id))
         conn.commit()
         return True, "Client modifié avec succès!"
-    except sqlite3.IntegrityError:
-        return False, "Ce nom existe déjà!"
+    except Exception as e:
+        return False, f"Erreur lors de la modification du client: {e}"
     finally:
         conn.close()
 
