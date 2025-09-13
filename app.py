@@ -11,7 +11,7 @@ def init_db():
     conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
 
-    # Table des clients (Modifié)
+    # Table des clients
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS clients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,7 +21,7 @@ def init_db():
         )
     ''')
 
-    # Table des opérations (Modifié)
+    # Table des opérations
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS operations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +38,7 @@ def init_db():
         )
     ''')
 
-    # Table des paiements (Modifié)
+    # Table des paiements
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS paiements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,7 +81,6 @@ def modifier_client(client_id, nom, telephone, description):
 def supprimer_client(client_id):
     conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
-    # On gère la suppression en cascade via la configuration de la table
     cursor.execute('DELETE FROM clients WHERE id = ?', (client_id,))
     conn.commit()
     conn.close()
@@ -162,11 +161,10 @@ def enregistrer_paiement(operation_id, type_paiement, montant):
     client_id = cursor.fetchone()[0]
     
     cursor.execute('''
-        INSERT INTO paiements (operation_id, client_id, type_paiement, montant, date_paiement)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (operation_id, client_id, type_paiement, montant, date_paiement))
+        INSERT INTO paiements (operation_id, type_paiement, montant, date_paiement)
+        VALUES (?, ?, ?, ?)
+    ''', (operation_id, type_paiement, montant, date_paiement))
     
-    # Vérifier si l'opération est terminée
     cursor.execute('SELECT SUM(montant) FROM paiements WHERE operation_id = ?', (operation_id,))
     total_paye = cursor.fetchone()[0] or 0
     
@@ -243,52 +241,48 @@ def format_number(number):
     """Formate un nombre avec des espaces pour les milliers."""
     return f"{number:,.0f}".replace(",", " ")
 
-# Fonction pour charger une image en base64
-def get_image_base64(path):
-    with open(path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode()
-
 # --- Interface Streamlit ---
 
 def main():
     st.set_page_config(page_title="Gestion Commerciale", page_icon="💰", layout="wide", initial_sidebar_state="expanded")
 
-    # CSS personnalisé avec des couleurs éclatantes et images
+    # CSS personnalisé avec des couleurs douces
     st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
-        color: #FFFFFF;
+        background: linear-gradient(135deg, #F0F4C3 0%, #D4E157 100%);
+        color: #333;
     }
     .st-emotion-cache-18ni343, .st-emotion-cache-163ttv1 {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.5);
+        color: #333;
     }
     .card {
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.9);
         padding: 20px;
         border-radius: 15px;
-        border: 3px solid #FFD700;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        border: 2px solid #AED581;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
         margin: 10px 0;
     }
     .operation-en-cours {
-        background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        background: linear-gradient(135deg, #FFECB3 0%, #FFB74D 100%);
         padding: 15px;
         border-radius: 10px;
-        border: 2px solid #FF6B6B;
+        border: 2px solid #FF9800;
         margin: 10px 0;
         color: #333;
     }
     .operation-termine {
-        background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+        background: linear-gradient(135deg, #C8E6C9 0%, #81C784 100%);
         padding: 15px;
         border-radius: 10px;
-        border: 2px solid #008000;
+        border: 2px solid #4CAF50;
         margin: 10px 0;
         color: #333;
     }
     .btn-primary {
-        background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%) !important;
+        background: linear-gradient(135deg, #80CBC4 0%, #4DB6AC 100%) !important;
         color: white !important;
         border: none !important;
         padding: 10px 20px !important;
@@ -297,7 +291,7 @@ def main():
         margin: 5px !important;
     }
     .btn-secondary {
-        background: linear-gradient(135deg, #4ECDC4 0%, #556270 100%) !important;
+        background: linear-gradient(135deg, #B2DFDB 0%, #80CBC4 100%) !important;
         color: white !important;
         border: none !important;
         padding: 10px 20px !important;
@@ -309,23 +303,21 @@ def main():
         background: rgba(255, 255, 255, 0.9);
         padding: 15px;
         border-radius: 15px;
-        border: 2px solid #FFD700;
+        border: 2px solid #64B5F6;
         text-align: center;
         margin: 10px;
         color: #333;
     }
     h1, h2, h3, h4, h5, h6 {
-        color: #FFD700;
-        text-shadow: 2px 2px 4px #000000;
+        color: #333;
+        text-shadow: 1px 1px 2px #AAA;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Initialisation de la base de données
     init_db()
     
-    # Navigation avec boutons colorés
-    st.sidebar.markdown("<h1 style='text-align: center; color: #FFD700;'>💰 GESTION COMMERCIALE</h1>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h1 style='text-align: center;'>💰 GESTION COMMERCIALE</h1>", unsafe_allow_html=True)
     
     if st.sidebar.button("🏠 ACCUEIL", use_container_width=True, type="primary"):
         st.session_state.current_page = "Accueil"
@@ -336,7 +328,6 @@ def main():
     if st.sidebar.button("💳 PAIEMENTS", use_container_width=True, type="primary"):
         st.session_state.current_page = "Paiements"
 
-    # Initialiser la page courante
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Accueil"
     
@@ -357,7 +348,6 @@ def main():
                 
                 prochaine_echeance = get_prochaine_echeance(op['id'], op['duree_mois'])
                 
-                # Montant du prochain paiement
                 montant_prochain_paiement = op['montant_mensualite']
                 
                 st.markdown(f"""
@@ -374,7 +364,6 @@ def main():
     elif st.session_state.current_page == "Clients":
         st.title("👥 GESTION DES CLIENTS")
         
-        # Ajouter client
         with st.expander("➕ AJOUTER UN CLIENT", expanded=False):
             with st.form("ajouter_client_form", clear_on_submit=True):
                 nom = st.text_input("Nom complet *", placeholder="Nom et prénom")
@@ -392,7 +381,6 @@ def main():
                     else:
                         st.error("Le nom est obligatoire!")
 
-        # Liste des clients
         st.subheader("📋 LISTE DES CLIENTS")
         clients = get_clients()
         
@@ -414,7 +402,6 @@ def main():
                             else:
                                 st.error(message)
 
-                    # Formulaire de modification
                     if 'edit_client_id' in st.session_state and st.session_state.edit_client_id == client['id']:
                         with st.form(f"mod_form_{client['id']}", clear_on_submit=False):
                             new_nom = st.text_input("Nouveau Nom", value=client['nom'])
@@ -490,7 +477,6 @@ def main():
                             else:
                                 st.error(message)
 
-                    # Formulaire de modification
                     if 'edit_op_id' in st.session_state and st.session_state.edit_op_id == op['id']:
                         with st.form(f"mod_form_op_{op['id']}", clear_on_submit=False):
                             new_valeur = st.number_input("Valeur marchandise", value=int(op['valeur_marchandise']), min_value=1, step=1)
@@ -531,7 +517,7 @@ def main():
                     if type_paiement == "Ordinaire":
                         montant_suggere = int(montant_mensuel)
                     else:
-                        montant_suggere = int(op_info['montant_benefice']) # Suggestion pour paiement anticipé
+                        montant_suggere = int(op_info['montant_benefice'])
 
                     montant = st.number_input("Montant (entier naturel) *", min_value=1, step=1, value=montant_suggere)
                     
