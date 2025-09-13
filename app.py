@@ -272,8 +272,8 @@ def get_all_paiements():
     df = pd.read_sql_query('''
         SELECT p.*, c.nom as client_nom, o.id as operation_id
         FROM paiements p
+        JOIN clients c ON p.client_id = c.id
         JOIN operations o ON p.operation_id = o.id
-        JOIN clients c ON o.client_id = c.id
         ORDER BY p.date_paiement DESC
     ''', conn)
     conn.close()
@@ -473,7 +473,7 @@ def main():
                 st.warning("Aucun client disponible. Veuillez d'abord créer un client.")
             else:
                 with st.form("ajouter_operation_form", clear_on_submit=True):
-                    client_options = {client['nom']: client['id'] for _, client in clients.iterrows()}
+                    client_options = {f"{client['nom']} (ID: {client['id']})": client['id'] for _, client in clients.iterrows()}
                     client_sel = st.selectbox("Client *", options=list(client_options.keys()))
                     valeur = st.number_input("Valeur de marchandise (entier naturel) *", min_value=1, step=1, value=1000000)
                     taux = st.number_input("Taux de bénéfice (%) (entier naturel) *", min_value=0, step=1, value=8)
@@ -548,9 +548,9 @@ def main():
                 st.warning("Aucune opération disponible pour enregistrer un paiement.")
             else:
                 with st.form("ajouter_paiement_form", clear_on_submit=True):
-                    op_options = [f"#{op['id']} - {op['client_nom']} - Total: {format_number(op['montant_total'])}" for _, op in operations.iterrows()]
-                    op_sel = st.selectbox("Opération *", options=op_options)
-                    op_id = int(op_sel.split(' - ')[0].replace('#', ''))
+                    op_options = {f"#{op['id']} - {op['client_nom']} - Total: {format_number(op['montant_total'])}": op['id'] for _, op in operations.iterrows()}
+                    op_sel = st.selectbox("Opération *", options=list(op_options.keys()))
+                    op_id = op_options[op_sel]
                     
                     op_info = operations[operations['id'] == op_id].iloc[0]
                     montant_mensuel = op_info['montant_mensualite']
