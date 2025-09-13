@@ -13,18 +13,15 @@ def init_db():
     conn = sqlite3.connect('ventes_terme.db')
     cursor = conn.cursor()
 
-    # Vérifier si la colonne 'nom' a une contrainte UNIQUE
+    # Migration de l'ancienne version avec `UNIQUE` sur `nom`
     try:
         cursor.execute("PRAGMA table_info(clients);")
         columns_info = cursor.fetchall()
-        is_unique = any(col[5] == 1 and col[1] == 'nom' for col in columns_info)
+        is_unique_nom = any(col[5] == 1 and col[1] == 'nom' for col in columns_info)
 
-        if is_unique:
-            st.info("Migration de la base de données en cours : Suppression de la contrainte UNIQUE sur le nom du client.")
-            # Étape 1: Renommer l'ancienne table
+        if is_unique_nom:
+            st.info("Migration de la base de données : Suppression de la contrainte UNIQUE sur le nom du client.")
             cursor.execute("ALTER TABLE clients RENAME TO clients_old;")
-            
-            # Étape 2: Créer la nouvelle table sans la contrainte UNIQUE sur 'nom'
             cursor.execute('''
                 CREATE TABLE clients (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,19 +30,34 @@ def init_db():
                     description TEXT
                 )
             ''')
-
-            # Étape 3: Copier les données de l'ancienne table vers la nouvelle
             cursor.execute("INSERT INTO clients (id, nom, telephone, description) SELECT id, nom, telephone, description FROM clients_old;")
-
-            # Étape 4: Supprimer l'ancienne table
             cursor.execute("DROP TABLE clients_old;")
-            
-            st.success("Migration de la base de données terminée!")
+            st.success("Migration terminée!")
     except sqlite3.OperationalError:
-        # La table 'clients' n'existe pas encore, on la crée
+        pass # La table 'clients' n'existe pas encore, on la crée plus tard
+
+    # Migration si la colonne `date_creation` existe dans `clients`
+    try:
+        cursor.execute("PRAGMA table_info(clients);")
+        columns = [col[1] for col in cursor.fetchall()]
+        if 'date_creation' in columns:
+            st.info("Migration de la base de données : Suppression de la colonne `date_creation` de la table `clients`.")
+            cursor.execute("ALTER TABLE clients RENAME TO clients_old;")
+            cursor.execute('''
+                CREATE TABLE clients (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nom TEXT NOT NULL,
+                    telephone TEXT,
+                    description TEXT
+                )
+            ''')
+            cursor.execute("INSERT INTO clients (id, nom, telephone, description) SELECT id, nom, telephone, description FROM clients_old;")
+            cursor.execute("DROP TABLE clients_old;")
+            st.success("Migration terminée!")
+    except sqlite3.OperationalError:
         pass
 
-    # Table des clients (création si elle n'existe pas)
+    # Table des clients
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS clients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -260,8 +272,8 @@ def get_all_paiements():
     df = pd.read_sql_query('''
         SELECT p.*, c.nom as client_nom, o.id as operation_id
         FROM paiements p
-        JOIN clients c ON p.client_id = c.id
         JOIN operations o ON p.operation_id = o.id
+        JOIN clients c ON o.client_id = c.id
         ORDER BY p.date_paiement DESC
     ''', conn)
     conn.close()
